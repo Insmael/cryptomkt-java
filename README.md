@@ -28,18 +28,18 @@ String api_secret= "21b12401";
 CryptomarketRestClient client = new CryptomarketRestClientImpl(api_key, api_secret);
 
 // get all currencies
-List<Currency> currencies = client.getCurrencies(null);
+Map<String, Currency> currencies = client.getCurrencies(null);
 
 // get some symbols
 List<String> symbolIds = new ArrayList<String>(Arrays.asList("eoseth","ethbtc"));
-List<Symbol> symbols = client.getSymbols(symbolIds);
+Map<String, Symbol> symbols = client.getSymbols(symbolIds);
 
 // get an order book
-OrderBook  orderbook = client.getOrderBook("eoseth", 5);
+OrderBook  orderbook = client.getOrderbookOfSymbol("eoseth");
 
 // get some candles
 List<String> symbols = new ArrayList<String>(Arrays.asList("eoseth", "ethbtc"));
-Map<String, List<Candle>> candles = client.getCandles(symbols, Period._4_HOURS, null);
+Map<String, List<Candle>> candles = client.getCandles(symbols, Period._4_HOURS, Sort.ASC, null, null, null);
 
 // get your account balances
 List<Balance> balances = client.getAccountBalance();
@@ -55,154 +55,28 @@ List<Order> orders = client.getActiveOrders('eoseth');
 
 
 // create a new order
-Order order = client.createOrder(new OrderRequest
-            .Builder()
-            .symbol("eos")
+Order order = client.createOrder(new ParamsBuilder()
+            .symbol("EOSETH")
             .side(Side.SELL)
+            .quantity("2")
             .price("100000")
-            .timeInForce(TimeInForce.DAY)
-            .build());
+            .timeInForce(TimeInForce.DAY));
+```
+## Using the ParamsBuilder
+most client methods have a version that accepts a ParamBuilder. This class makes easier to pass parameters.
+```java
+import com.cryptomarket.params.ParamsBuilder;
+
+// get candles
+Map<String, List<Candle>> candles client.getCandles(new ParamsBuilder()
+          .symbols(symbols)
+          .period(Period._4_HOURS)
+          .sort(Sort.ASC));
 ```
 
 ## websocket client
+*work in progress*
 
-All websocket calls work with a Callback class
-
-There are three websocket clients, one for public request (CryptomarketWSPublicClient), one for trading request (CryptomarketWSTradingClient) and one for the account requests (CryptomarketWSAccountClient). The trading client and the account client must be authenticated before any other request.
-
-```java
-
-// instance a client
-String apiKey = "AB32B3201";
-String apiSecret= "21b12401";
-
-
-CryptomarketWSPublicClient wsClient = new CryptomarketWSPublicClientImpl();
-
-// get currencies
-wsClient.getCurrency("EOS", new Callback<Currency>() {
-    @Override
-    public void resolve(Currency result) {
-        System.out.println(result);
-    }
-});
-
-CryptomarketWSTradingClient tradingClient = new CryptomarketWSTradingClientImpl(getApiKey, getApiSecret);
-
-
-// get your trading balances
-tradingClient.getTradingBalance(new Callback<List<Balance>>() {
-    @Override
-    public void resolve(List<Balance> result) {
-        // and print my EOS balance
-        result.forEach((Balance balance) -> {if (balance.getCurrency().equals("EOS")) System.out.println(balance);});
-    }
-});
-
-
-// get your active orders
-tradingClient.getActiveOrders(new Callback<List<Report>>() {
-    @Override
-    public void resolve(List<Report> result) {
-        System.out.println(result);
-    }
-});
-
-// create a new order
-tradingClient.createOrder(new OrderRequest
-    .Builder()
-    .clientOrderId("123123123123")
-    .symbol("ETHBTC")
-    .side(Side.BUY)
-    .quantity("10")
-    .price("10")
-    .build(),
-    new Callback<Report>() {
-        @Override
-        public void resolve(Report result) {
-            System.out.println(result);
-        }
-    });
-
-CryptomarketWSAccountClient accountClient = new CryptomarketWSAccountClientImpl(getApiKey, getApiSecret);
-
-// get your account Balance
-accountClient.getAccountBalance(new Callback<List<Balance>>() {
-    @Override
-    public void resolve(List<Balance> result) {
-        // and print my EOS balance
-        result.forEach((Balance balance) -> {if (balance.getCurrency().equals("EOS")) System.out.println(balance);});
-    }
-});
-```
-
-### subscriptions
-
-Subscriptions take two callbacks, one for the feed and one for the request itself
-
-```java
-CryptomarketWSPublicClient wsClient = new CryptomarketWSPublicClientImpl();
-
-// get an order book feed, 
-// feedCallback is for the subscription feed
-// resultCallback is for the subscription result (success or failure)
-String symbol = "ETHBTC";
-Callback<Boolean> resultCallback = new Callback<Boolean>() {
-    @Override
-    public void resolve(Boolean result) {
-        if (result) System.out.println(String.format("subscription to orderbook %s successfull", symbol));
-        else System.out.println("subscription failed");
-    }
-};
-Callback<OrderBook> feedCallback = new Callback<OrderBook>() {
-    @Override
-    public void resolve(OrderBook result) {
-        // the orderbook feed
-        System.out.println(result);
-        }
-    }
-};
-wsClient.subscribeToOrderbook(symbol, feedCallback, resultCallback);
-```
-## client lifetime hooks
-
-The three websocket clients exposes the onConnect, onFailure, onClose and close methods to manage their lifetime.
-onFailure is called when the authorization fails, and its default behaviour is to print the stack trace
-
-```java
-try {
-    CryptomarketWSAccountClient wsClient;
-    wsClient = new CryptomarketWSAccountClientImpl(KeyLoader.getApiKey(), KeyLoader.getApiSecret()) {
-        @Override
-        public void onClose(String reason) {
-            System.out.println("closing");   
-        }
-
-        @Override
-        public void onConnect(CryptomarketWSAccountClient client) {
-            System.out.println("connected");
-            client.getAccountBalance(new Callback<List<Balance>>() {
-                @Override
-                public void resolve(List<Balance> result) {System.out.println("request returning");}
-    
-                @Override
-                public void reject(Throwable exception) {fail();}
-            });
-            try {TimeUnit.SECONDS.sleep(3);} catch (InterruptedException e) {fail();}
-            client.close();
-        }
-
-        @Override
-        public void onFailure(Throwable t) {
-            t.printStackTrace();
-        }
-    };
-    wsClient.connect();
-    try {TimeUnit.SECONDS.sleep(8);} catch (InterruptedException e) {fail();}
-} catch (Exception e) {
-    e.printStackTrace();
-}
-```
 ## exception handling
 ```java
 
@@ -218,21 +92,6 @@ try {
     e.printStackTrace();
 }
 
-// websocket exceptions
-CryptomarketWSTradingClient wsClient = new CryptomarketWSTradingClientImpl(getApiKey, getApiSecret);
-
-// all Callbacks can override the reject method
-wsClient.authenticate(new Callback<Boolean>() {
-    @Override
-    public void resolve(Boolean result) {
-        authenticated = result;
-    }
-    @Override
-    public void reject(Throwable exception) {
-        // exceptions from the api are given here
-        exception.printStackTrace();
-    }
-});
 ```
 
 # Constants
@@ -240,9 +99,11 @@ wsClient.authenticate(new Callback<Boolean>() {
 All constants required for calls are in `com.cryptomarket.sdk.params`.
 each enum has the name of the argument that needs it.
 Here is the full list
+
+TODO: update
+
 ```java
 import com.cryptomarket.params.*;
-
 // use for candle intervals
 Period._1_MINUTES;
 Period._3_MINUTES;
@@ -259,7 +120,7 @@ Period._1_MONTHS;
 Sort.DESC;
 Sort.ASC;
 
-// used for pagination field for sorting 
+// used for pagination field for sorting
 By.TIMESTAMP;
 By.ID;
 
@@ -304,7 +165,7 @@ OrderRequest request = new OrderRequest.Builder()
 ```
 
 # Pagination
-A Pagination is used to request some data. 
+A Pagination is used to request some data.
 Here is an example with all posible parameters, sorting by id
 ```java
 import com.cryptomarket.params.*;

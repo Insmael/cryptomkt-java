@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.cryptomarket.params.OrderRequest;
 import com.cryptomarket.params.OrderType;
 import com.cryptomarket.params.Side;
 import com.cryptomarket.params.TimeInForce;
@@ -20,7 +19,7 @@ import com.cryptomarket.sdk.websocket.interceptor.InterceptorFactory;
 import com.squareup.moshi.JsonDataException;
 
 public class CryptomarketWSTradingClientImpl extends AuthClient implements CryptomarketWSTradingClient {
-    
+
     public CryptomarketWSTradingClientImpl(String apiKey, String apiSecret) throws IOException {
         super("wss://api.exchange.cryptomkt.com/api/2/ws/trading", apiKey, apiSecret);
         Map<String, String> subsKeys = this.getSubscritpionKeys();
@@ -31,22 +30,6 @@ public class CryptomarketWSTradingClientImpl extends AuthClient implements Crypt
         subsKeys.put("report","reports");
     }
 
-    @Override
-    public void createOrder(OrderRequest orderRequest, Callback<Report> callback) {
-        createOrder(
-            orderRequest.clientOrderId,
-            orderRequest.symbol,
-            orderRequest.side,
-            orderRequest.quantity,
-            orderRequest.orderType,
-            orderRequest.price,
-            orderRequest.stopPrice,
-            orderRequest.timeInForce,
-            orderRequest.expireTime,
-            orderRequest.strictValidate,
-            orderRequest.postOnly,
-            callback);
-    }
 
     @Override
     public void createOrder(String clientOrderId, String symbol, Side side, String quantity, OrderType orderType,
@@ -64,9 +47,9 @@ public class CryptomarketWSTradingClientImpl extends AuthClient implements Crypt
         params.put("expireTime", expireTime);
         if (strictValidate != null) params.put("strictValidate", strictValidate.toString());
         if (postOnly != null) params.put("postOnly", postOnly.toString());
-        Interceptor interceptor = 
-            (callback == null) ? 
-            null : 
+        Interceptor interceptor =
+            (callback == null) ?
+            null :
             InterceptorFactory.newOfWSResponseObject(callback, Report.class);
         sendById("newOrder", params, interceptor);
     }
@@ -75,9 +58,9 @@ public class CryptomarketWSTradingClientImpl extends AuthClient implements Crypt
     public void cancelOrder(String clientOrderId, Callback<Report> callback) {
         Map<String, Object> params = new HashMap<>();
         params.put("clientOrderId", clientOrderId);
-        Interceptor interceptor = 
-            (callback == null) ? 
-            null : 
+        Interceptor interceptor =
+            (callback == null) ?
+            null :
             InterceptorFactory.newOfWSResponseObject(callback, Report.class);
         sendById("cancelOrder", params, interceptor);
     }
@@ -91,9 +74,9 @@ public class CryptomarketWSTradingClientImpl extends AuthClient implements Crypt
         params.put("quantity", quantity);
         params.put("price", price);
         if (strictValidate != null) params.put("strictValidate", strictValidate.toString());
-        Interceptor interceptor = 
-            (callback == null) ? 
-            null : 
+        Interceptor interceptor =
+            (callback == null) ?
+            null :
             InterceptorFactory.newOfWSResponseObject(callback, Report.class);
         sendById("cancelReplaceOrder", params, interceptor);
     }
@@ -101,9 +84,9 @@ public class CryptomarketWSTradingClientImpl extends AuthClient implements Crypt
     @Override
     public void getActiveOrders(Callback<List<Report>> callback) {
         Map<String, Object> params = new HashMap<>();
-        Interceptor interceptor = 
-            (callback == null) ? 
-            null : 
+        Interceptor interceptor =
+            (callback == null) ?
+            null :
             InterceptorFactory.newOfWSResponseList(callback, Report.class);
         sendById("getOrders", params, interceptor);
     }
@@ -111,9 +94,9 @@ public class CryptomarketWSTradingClientImpl extends AuthClient implements Crypt
     @Override
     public void getTradingBalance(Callback<List<Balance>> callback) {
         Map<String, Object> params = new HashMap<>();
-        Interceptor interceptor = 
-            (callback == null) ? 
-            null : 
+        Interceptor interceptor =
+            (callback == null) ?
+            null :
             InterceptorFactory.newOfWSResponseList(callback, Balance.class);
         sendById("getTradingBalance", params, interceptor);
     }
@@ -141,9 +124,9 @@ public class CryptomarketWSTradingClientImpl extends AuthClient implements Crypt
                 }
             }
         };
-        Interceptor resultInterceptor = 
-            (resultCallback == null) ? 
-            null : 
+        Interceptor resultInterceptor =
+            (resultCallback == null) ?
+            null :
             InterceptorFactory.newOfWSResponseObject(resultCallback, Boolean.class);
         sendSubscription("subscribeReports", params, interceptor, resultInterceptor);
     }

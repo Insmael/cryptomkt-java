@@ -1,12 +1,12 @@
 package com.cryptomarket.params;
 
-public enum TransferType {
-    BANK_TO_EXCHANGE("bankToExchange"),
-    EXCHANGE_TO_BANK("exchangeToBank");
+public enum IdentifyBy {
+    EMAIL("email"),
+    USERNAME("username");
 
     private final String label;
 
-    private TransferType(String label) {
+    private IdentifyBy(String label) {
         this.label = label;
     }
 

@@ -1,4 +1,4 @@
-package com.cryptomarket.params;
+package com.cryptomarket.sdk.models;
 
 public enum OrderType {
     LIMIT("limit"),

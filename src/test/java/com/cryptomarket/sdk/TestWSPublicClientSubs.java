@@ -39,7 +39,7 @@ public class TestWSPublicClientSubs {
             try {TimeUnit.SECONDS.sleep(3);} catch (InterruptedException e) {fail();}
         } catch (Exception e) {
             e.printStackTrace();
-        }   
+        }
     }
 
     @After
@@ -69,7 +69,7 @@ public class TestWSPublicClientSubs {
     public void testTickerSubscription() {
         TimeFlow.reset();
         String symbol = "ETHBTC";
-        wsClient.subscribeToTicker(symbol, 
+        wsClient.subscribeToTicker(symbol,
             new Callback<Ticker>() {
 
                 @Override
@@ -99,7 +99,7 @@ public class TestWSPublicClientSubs {
                 BigDecimal actualPrice;
                 BigDecimal lastPrice = null;
                 for (OrderbookLevel entry: result.getAsk()) {
-                    size = new BigDecimal(entry.getSize());
+                    size = new BigDecimal(entry.getAmount());
                     zero = new BigDecimal("0.00");
                     if (size.compareTo(zero) == 0) fail();
                     actualPrice = new BigDecimal(entry.getPrice());
@@ -107,11 +107,11 @@ public class TestWSPublicClientSubs {
                         if (lastPrice.compareTo(actualPrice) == 1) fail();
                     }
                     lastPrice = actualPrice;
-                    
+
                 }
                 lastPrice = null;
                 for (OrderbookLevel entry: result.getBid()) {
-                    size = new BigDecimal(entry.getSize());
+                    size = new BigDecimal(entry.getAmount());
                     zero = new BigDecimal("0.00");
                     if (size.compareTo(zero) == 0) fail();
                     actualPrice = new BigDecimal(entry.getPrice());
@@ -146,7 +146,7 @@ public class TestWSPublicClientSubs {
         wsClient.subscribeToTrades(symbol, null, callback, resultCallback);
 
         try {TimeUnit.MINUTES.sleep(5);} catch (InterruptedException e) {fail();}
-        
+
         wsClient.unsubscribeToTrades(symbol, resultCallback);
 
         try {TimeUnit.SECONDS.sleep(5);} catch (InterruptedException e) {fail();}
@@ -168,7 +168,7 @@ public class TestWSPublicClientSubs {
         wsClient.subscribeToCandles(symbol, Period._1_MINUTES, null, callback, resultCallback);
 
         try {TimeUnit.MINUTES.sleep(3);} catch (InterruptedException e) {fail();}
-        
+
         wsClient.unsubscribeToTrades(symbol, resultCallback);
 
         try {TimeUnit.SECONDS.sleep(10);} catch (InterruptedException e) {fail();}

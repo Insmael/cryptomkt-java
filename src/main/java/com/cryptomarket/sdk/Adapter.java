@@ -7,12 +7,19 @@ import java.util.List;
 import java.util.Map;
 
 import com.cryptomarket.sdk.exceptions.CryptomarketSDKException;
+import com.cryptomarket.sdk.models.adapters.OrderBookLevelAdapter;
+import com.cryptomarket.sdk.models.adapters.OrderStatusAdapter;
+import com.cryptomarket.sdk.models.adapters.OrderTypeAdapter;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import com.squareup.moshi.Types;
 
 public class Adapter {
-    private final Moshi moshi = new Moshi.Builder().build();
+    private final Moshi moshi = new Moshi.Builder()
+    .add(new OrderBookLevelAdapter())
+    .add(new OrderStatusAdapter())
+    .add(new OrderTypeAdapter())
+    .build();
 
     public <T> T objectFromJson(String json, Class<T> cls) throws CryptomarketSDKException {
         JsonAdapter<T> jsonAdapter = moshi.adapter(cls);
@@ -40,7 +47,7 @@ public class Adapter {
             Map<String, Object> objectMap = mapAdapter.fromJson(json);
             type = Types.newParameterizedType(List.class, cls);
             JsonAdapter<List<T>> jsonAdapter = moshi.adapter(type);
-            
+
             Map<String, List<T>> parsed = new HashMap<String, List<T>>();
             objectMap.forEach((key, value) -> {
                 parsed.put(key, jsonAdapter.fromJsonValue(value));
@@ -65,7 +72,7 @@ public class Adapter {
         Map<String, Object> objectMap = mapFromJson(json, Object.class);
         JsonAdapter<T> jsonAdapter = moshi.adapter(cls);
         Object value = objectMap.get(key);
-        return jsonAdapter.fromJsonValue(value);   
+        return jsonAdapter.fromJsonValue(value);
     }
 
     public <T> List<T> listFromJsonValue(String json, String key, Class<T> cls) throws CryptomarketSDKException {
@@ -73,7 +80,7 @@ public class Adapter {
         Type type = Types.newParameterizedType(List.class, cls);
         JsonAdapter<List<T>> jsonAdapter = moshi.adapter(type);
         Object value = objectMap.get(key);
-        return jsonAdapter.fromJsonValue(value);   
+        return jsonAdapter.fromJsonValue(value);
     }
 
     public <T> T objectFromValue(Object value, Class<T> cls) {

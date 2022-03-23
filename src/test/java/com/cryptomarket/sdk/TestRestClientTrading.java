@@ -9,8 +9,8 @@ import com.cryptomarket.sdk.exceptions.CryptomarketSDKException;
 import com.cryptomarket.sdk.models.Balance;
 import com.cryptomarket.sdk.models.Commission;
 import com.cryptomarket.sdk.models.Order;
-import com.cryptomarket.params.OrderRequest;
 import com.cryptomarket.params.OrderType;
+import com.cryptomarket.params.ParamsBuilder;
 import com.cryptomarket.params.Side;
 
 import org.junit.Test;
@@ -20,107 +20,99 @@ public class TestRestClientTrading {
 
 
     @Test
-    public void testGetBalance() {
+    public void testGetSpotTradingBalance() {
         try {
-            List<Balance> balances = client.getTradingBalance();
+            List<Balance> balances = client.getSpotTradingBalances();
             balances.forEach(Checker.checkBalance);
         } catch (CryptomarketSDKException e) {
-            e.printStackTrace();
-            fail();
+            fail(e.toString());
         }
     }
 
     @Test
-    public void testGetActiveOrders() {
+    public void testGetSpotTradingBalanceOfCurrency() {
         try {
-            List<Order> orders = client.getActiveOrders(null); 
+            Balance balance = client.getSpotTradingBalanceOfCurrency("EOS");
+            Checker.checkBalance.accept(balance);
+        } catch (CryptomarketSDKException e) {
+            fail(e.toString());
+        }
+    }
+
+    @Test
+    public void testGetAllActiveSpotOrders() {
+        try {
+            List<Order> orders = client.getAllActiveSpotOrders(null);
             orders.forEach(Checker.checkOrder);
         } catch (CryptomarketSDKException e) {
-            e.printStackTrace();
-            fail();
+            fail(e.toString());
         }
     }
 
     @Test
     public void testCancelAllOrders() {
         try {
-            List<Order> orders = client.cancelAllOrders();
-            orders.forEach(Checker.checkOrder);
-        } catch (CryptomarketSDKException e) {
-            e.printStackTrace();
-            fail();
-        }
-    }
-
-    @Test
-    public void testCancelOrdersOfSymbol() {
-        try {
-            client.cancelAllOrders();
-            client.createOrder(new OrderRequest.Builder()
+          client.createSpotOrder(new ParamsBuilder()
                 .symbol("EOSBTC")
                 .side(Side.SELL)
                 .quantity("0.01")
                 .orderType(OrderType.LIMIT)
                 .price("1000")
-                .build()
             );
-            client.createOrder(new OrderRequest.Builder()
+            client.createSpotOrder(new ParamsBuilder()
                 .symbol("EOSETH")
                 .side(Side.SELL)
                 .quantity("0.01")
                 .orderType(OrderType.LIMIT)
                 .price("1000")
-                .build()
             );
-            List<Order> orders = client.cancelAllOrders();
-            System.out.println(orders.size());
-            assertTrue(orders.size() == 2);
-            
+            List<Order> orders = client.cancelAllSpotOrders();
             orders.forEach(Checker.checkOrder);
         } catch (CryptomarketSDKException e) {
-            e.printStackTrace();
-            fail();
-        }
-    }
-
-    @Test 
-    public void testOrderFlow() {
-        try {
-            String clientOrderId = String.format("%d", System.currentTimeMillis());
-            Order order = client.createOrder(new OrderRequest.Builder()
-                .clientOrderId(clientOrderId)
-                .symbol("EOSETH")
-                .side(Side.SELL)
-                .quantity("0.01")
-                .orderType(OrderType.LIMIT)
-                .price("1000")
-                .build()
-            );
-            Checker.checkOrder.accept(order);
-            List<Order> orders = client.getActiveOrders("EOSETH");
-            orders.forEach(Checker.checkOrder);
-            Boolean present = false;
-            for (Order ord: orders) {
-                if (ord.getClientOrderId().equals(clientOrderId)) present = true;
-            }
-            if (!present) fail();
-            order = client.cancelOrder(order.getClientOrderId());
-            Checker.checkOrder.accept(order);
-        } catch (CryptomarketSDKException e) {
-            e.printStackTrace();
-            fail();
+            fail(e.toString());
         }
     }
 
     @Test
-    public void getTradingCommission() {
+    public void testOrderFlow() {
         try {
-            Commission com = client.getTradingCommission("EOSETH");
-            if (com.getTakeLiquidityRate() == null || com.getTakeLiquidityRate().equals("")) fail();
-            if (com.getProvideLiquidityRate() == null || com.getProvideLiquidityRate().equals("")) fail();
+            String clientOrderID = String.format("%d", System.currentTimeMillis());
+            Order order = client.createSpotOrder(new ParamsBuilder()
+                .clientOrderID(clientOrderID)
+                .symbol("EOSETH")
+                .side(Side.SELL)
+                .quantity("0.01")
+                .orderType(OrderType.LIMIT)
+                .price("1000")
+            );
+            Checker.checkOrder.accept(order);
+            order = client.getActiveSpotOrder(order.getClientOrderID());
+            Checker.checkOrder.accept(order);
+            order = client.cancelSpotOrder(order.getClientOrderID());
+            Checker.checkOrder.accept(order);
         } catch (CryptomarketSDKException e) {
-            e.printStackTrace();
-            fail();
+            fail(e.toString());
+        }
+    }
+
+
+    @Test
+    public void testGetAllTradingCommission() {
+        try {
+            List<Commission> commissions = client.getAllTradingCommission();
+            commissions.forEach(Checker.checkCommission);
+        } catch (CryptomarketSDKException e) {
+            fail(e.toString());
+        }
+    }
+
+    @Test
+    public void testGetTradingCommission() {
+        try {
+            Commission commission = client.getTradingCommission("EOSETH");
+            Checker.checkCommission.accept(commission);
+        } catch (CryptomarketSDKException e) {
+            fail(e.toString());
         }
     }
 }

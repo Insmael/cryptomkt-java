@@ -5,8 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.cryptomarket.params.By;
-import com.cryptomarket.params.Pagination;
+import com.cryptomarket.params.SortBy;
 import com.cryptomarket.params.Period;
 import com.cryptomarket.params.Sort;
 import com.cryptomarket.sdk.Adapter;
@@ -62,7 +61,7 @@ public class CryptomarketWSPublicClientImpl extends ClientBase implements Crypto
         subsKeys.put("subscribeCandles","candles");
         subsKeys.put("unsubscribeCandles","candles");
         subsKeys.put("snapshotCandles","candles");
-        subsKeys.put("updateCandles","candles");   
+        subsKeys.put("updateCandles","candles");
     }
 
     @Override
@@ -114,8 +113,8 @@ public class CryptomarketWSPublicClientImpl extends ClientBase implements Crypto
     public void getCurrencies(Callback<List<Currency>> callback) {
         Map<String, Object> params = new HashMap<>();
         sendById(
-            "getCurrencies", 
-            params, 
+            "getCurrencies",
+            params,
             InterceptorFactory.newOfWSResponseList(callback, Currency.class));
     }
 
@@ -155,9 +154,9 @@ public class CryptomarketWSPublicClientImpl extends ClientBase implements Crypto
                 }
             }
         };
-        Interceptor resultInterceptor = 
-            (resultCallback == null) ? 
-            null : 
+        Interceptor resultInterceptor =
+            (resultCallback == null) ?
+            null :
             InterceptorFactory.newOfWSResponseObject(resultCallback, Boolean.class);
 
         sendSubscription("subscribeTicker", params, interceptor, resultInterceptor);
@@ -167,9 +166,9 @@ public class CryptomarketWSPublicClientImpl extends ClientBase implements Crypto
     public void unsubscribeToTicker(String symbol, Callback<Boolean> callback) {
         Map<String, Object> params = new HashMap<>();
         params.put("symbol", symbol);
-        Interceptor interceptor = 
-            (callback == null) ? 
-            null : 
+        Interceptor interceptor =
+            (callback == null) ?
+            null :
             InterceptorFactory.newOfWSResponseObject(callback, Boolean.class);
         sendUnsubscription("unsubscribeTicker", params, interceptor);
     }
@@ -184,9 +183,9 @@ public class CryptomarketWSPublicClientImpl extends ClientBase implements Crypto
                 callback.resolve(orderBook);
             }
         };
-        Interceptor resultInterceptor = 
-            (resultCallback == null) ? 
-            null : 
+        Interceptor resultInterceptor =
+            (resultCallback == null) ?
+            null :
             InterceptorFactory.newOfWSResponseObject(resultCallback, Boolean.class);
         sendSubscription("subscribeOrderbook", params, interceptor, resultInterceptor);
 
@@ -196,9 +195,9 @@ public class CryptomarketWSPublicClientImpl extends ClientBase implements Crypto
     public void unsubscribeToOrderbook(String symbol, Callback<Boolean> callback) {
         Map<String, Object> params = new HashMap<>();
         params.put("symbol", symbol);
-        Interceptor interceptor = 
-            (callback == null) ? 
-            null : 
+        Interceptor interceptor =
+            (callback == null) ?
+            null :
             InterceptorFactory.newOfWSResponseObject(callback, Boolean.class);
         sendUnsubscription("unsubscribeOrderbook", params, interceptor);
     }
@@ -220,9 +219,9 @@ public class CryptomarketWSPublicClientImpl extends ClientBase implements Crypto
                 }
             }
         };
-        Interceptor resultInterceptor = 
-            (resultCallback == null) ? 
-            null : 
+        Interceptor resultInterceptor =
+            (resultCallback == null) ?
+            null :
             InterceptorFactory.newOfWSResponseObject(resultCallback, Boolean.class);
         sendSubscription("subscribeTrades", params, interceptor, resultInterceptor);
     }
@@ -231,15 +230,15 @@ public class CryptomarketWSPublicClientImpl extends ClientBase implements Crypto
     public void unsubscribeToTrades(String symbol, Callback<Boolean> callback) {
         Map<String, Object> params = new HashMap<>();
         params.put("symbol", symbol);
-        Interceptor interceptor = 
-            (callback == null) ? 
-            null : 
+        Interceptor interceptor =
+            (callback == null) ?
+            null :
             InterceptorFactory.newOfWSResponseObject(callback, Boolean.class);
         sendUnsubscription("unsubscribeTrades", params, interceptor);
     }
 
     @Override
-    public void getTrades(String symbol, Sort sort, By by, String from, String till, Integer limit, Integer offset,
+    public void getTrades(String symbol, Sort sort, SortBy by, String from, String till, Integer limit, Integer offset,
             Callback<List<PublicTrade>> callback) {
         Map<String, Object> params = new HashMap<>();
         params.put("symbol", symbol);
@@ -264,20 +263,6 @@ public class CryptomarketWSPublicClientImpl extends ClientBase implements Crypto
     }
 
     @Override
-    public void getTrades(String symbol, Pagination pagination, Callback<List<PublicTrade>> callback) {
-        if (pagination == null) pagination = new Pagination.Builder().build();
-        getTrades(
-            symbol,
-            pagination.sort,
-            pagination.by,
-            pagination.from,
-            pagination.till,
-            pagination.limit,
-            pagination.offset,
-            callback);
-    }
-
-    @Override
     public void subscribeToCandles(String symbol, Period period, Integer limit, Callback<List<Candle>> callback,
             Callback<Boolean> resultCallback) {
         Map<String, Object> params = new HashMap<>();
@@ -297,9 +282,9 @@ public class CryptomarketWSPublicClientImpl extends ClientBase implements Crypto
                 }
             }
         };
-        Interceptor resultInterceptor = 
-            (resultCallback == null) ? 
-            null : 
+        Interceptor resultInterceptor =
+            (resultCallback == null) ?
+            null :
             InterceptorFactory.newOfWSResponseObject(resultCallback, Boolean.class);
         sendSubscription("subscribeCandles", params, interceptor, resultInterceptor);
     }
@@ -310,9 +295,9 @@ public class CryptomarketWSPublicClientImpl extends ClientBase implements Crypto
         params.put("symbol", symbol);
         if (period == null) period = Period._30_MINUTES;
         params.put("period", period.toString());
-        Interceptor interceptor = 
-            (callback == null) ? 
-            null : 
+        Interceptor interceptor =
+            (callback == null) ?
+            null :
             InterceptorFactory.newOfWSResponseObject(callback, Boolean.class);
         sendUnsubscription("unsubscribeCandles", params, interceptor);
     }

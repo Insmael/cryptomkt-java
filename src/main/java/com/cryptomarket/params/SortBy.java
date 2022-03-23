@@ -1,12 +1,13 @@
 package com.cryptomarket.params;
 
-public enum By {
+public enum SortBy {
     TIMESTAMP("timestamp"),
-    ID("id");
+    ID("id"),
+    DATE("created_at");
 
     private final String label;
 
-    private By(String label) {
+    private SortBy(String label) {
         this.label = label;
     }
 

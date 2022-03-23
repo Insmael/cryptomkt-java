@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.cryptomarket.params.Pagination;
 import com.cryptomarket.params.Sort;
 import com.cryptomarket.sdk.Callback;
 import com.cryptomarket.sdk.exceptions.CryptomarketAPIException;
@@ -49,7 +48,7 @@ public class CryptomarketWSAccountClientImpl extends AuthClient implements Crypt
         if (limit != null) params.put("limit", limit);
         if (offset != null) params.put("offset", offset);
         if (showSenders != null) params.put("showSenders", showSenders.toString());
-    
+
         Interceptor interceptor = (callback == null) ? null
                 : InterceptorFactory.newOfWSResponseList(callback, Transaction.class);
         sendById(method, params, interceptor);
@@ -61,19 +60,6 @@ public class CryptomarketWSAccountClientImpl extends AuthClient implements Crypt
         getTransactionList("findTransactions", currency, sort, from, till, limit, offset, showSenders, callback);
     }
 
-    @Override
-    public void findTransactions(String currency, Pagination pagination, Boolean showSenders, Callback<List<Transaction>> callback) {
-        if (pagination == null) pagination = new Pagination.Builder().build();
-        findTransactions(
-            currency, 
-            pagination.sort,
-            pagination.from,
-            pagination.till,
-            pagination.limit,
-            pagination.offset,
-            showSenders,
-            callback);
-    }
 
     @Override
     public void loadTransactions(String currency, Sort sort, String from, String till, Integer limit,
@@ -82,20 +68,6 @@ public class CryptomarketWSAccountClientImpl extends AuthClient implements Crypt
 
     }
 
-    @Override
-    public void loadTransactions(String currency, Pagination pagination, Boolean showSenders, Callback<List<Transaction>> callback) {
-        if (pagination == null) pagination = new Pagination.Builder().build();
-        loadTransactions(
-            currency, 
-            pagination.sort,
-            pagination.from,
-            pagination.till,
-            pagination.limit,
-            pagination.offset,
-            showSenders,
-            callback);
-
-    }
 
     @Override
     public void subscribeToTransactions(Callback<Transaction> callback, Callback<Boolean> resultCallback) {
@@ -119,9 +91,9 @@ public class CryptomarketWSAccountClientImpl extends AuthClient implements Crypt
 
     @Override
     public void unsubscribeToTransactions(Callback<Boolean> callback) {
-        Interceptor interceptor = 
-            (callback == null) ? 
-            null : 
+        Interceptor interceptor =
+            (callback == null) ?
+            null :
             InterceptorFactory.newOfWSResponseObject(callback, Boolean.class);
         sendUnsubscription("unsubscribeTicker", null, interceptor);
     }
@@ -148,9 +120,9 @@ public class CryptomarketWSAccountClientImpl extends AuthClient implements Crypt
 
     @Override
     public void unsubscribeToBalance(Callback<Boolean> callback) {
-        Interceptor interceptor = 
-            (callback == null) ? 
-            null : 
+        Interceptor interceptor =
+            (callback == null) ?
+            null :
             InterceptorFactory.newOfWSResponseObject(callback, Boolean.class);
         sendUnsubscription("unsubscribeBalance", null, interceptor);
     }
