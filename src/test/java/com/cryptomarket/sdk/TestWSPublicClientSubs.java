@@ -4,15 +4,25 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import com.cryptomarket.params.Depth;
+import com.cryptomarket.params.OBSpeed;
 import com.cryptomarket.params.Period;
+import com.cryptomarket.params.TickerSpeed;
 import com.cryptomarket.sdk.models.Candle;
 import com.cryptomarket.sdk.models.OrderBook;
 import com.cryptomarket.sdk.models.OrderbookLevel;
 import com.cryptomarket.sdk.models.PublicTrade;
 import com.cryptomarket.sdk.models.Ticker;
+import com.cryptomarket.sdk.models.WSCandle;
+import com.cryptomarket.sdk.models.WSOrderBook;
+import com.cryptomarket.sdk.models.WSOrderBookTop;
+import com.cryptomarket.sdk.models.WSPublicTrade;
+import com.cryptomarket.sdk.models.WSTicker;
 import com.cryptomarket.sdk.websocket.CryptomarketWSPublicClient;
 import com.cryptomarket.sdk.websocket.CryptomarketWSPublicClientImpl;
 
@@ -21,156 +31,218 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class TestWSPublicClientSubs {
-    CryptomarketWSPublicClient wsClient;
-    Boolean authenticated = false;
-    Callback<Boolean> resultCallback =  new Callback<Boolean>() {
-        @Override
-        public void resolve(Boolean result) {;}
+  CryptomarketWSPublicClient wsClient;
+  Boolean authenticated = false;
+  Callback<Boolean> resultCallback = new Callback<Boolean>() {
+    @Override
+    public void resolve(Boolean result) {
+      ;
+    }
 
-        @Override
-        public void reject(Throwable exception) {fail();}
+    @Override
+    public void reject(Throwable exception) {
+      fail();
+    }
+  };
+
+  @Before
+  public void before() {
+    try {
+      wsClient = new CryptomarketWSPublicClientImpl();
+      wsClient.connect();
+      try {
+        TimeUnit.SECONDS.sleep(3);
+      } catch (InterruptedException e) {
+        fail();
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  @After
+  public void after() {
+    wsClient.close();
+  }
+
+  @Test
+  public void TestTimeFlow() {
+    TimeFlow.reset();
+    Boolean goodFLow;
+    goodFLow = TimeFlow.checkNextTimestamp("2021-01-27T15:47:54.418Z");
+    if (!goodFLow) {
+      fail();
+    }
+    goodFLow = TimeFlow.checkNextTimestamp("2021-01-27T15:47:55.118Z");
+    if (!goodFLow) {
+      fail();
+    }
+    goodFLow = TimeFlow.checkNextTimestamp("2021-01-27T15:47:54.418Z");
+    if (goodFLow) {
+      fail();
+    }
+  }
+
+  @Test
+  public void testTradesSubscription() {
+    List<String> symbols = Arrays.asList("EOSETH");
+    Callback<Map<String, List<WSPublicTrade>>> callback = new Callback<Map<String, List<WSPublicTrade>>>() {
+      @Override
+      public void resolve(Map<String, List<WSPublicTrade>> result) {
+        System.out.println(result);
+      }
+    };
+    Callback<List<String>> resultCallback = new Callback<List<String>>() {
+      @Override
+      public void resolve(List<String> result) {
+        System.out.println(result);
+      }
+
+      @Override
+      public void reject(Throwable exception) {
+        System.out.println(exception);
+        fail();
+      }
     };
 
-    @Before
-    public void before() {
-        try {
-            wsClient = new CryptomarketWSPublicClientImpl();
-            wsClient.connect();
-            try {TimeUnit.SECONDS.sleep(3);} catch (InterruptedException e) {fail();}
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    wsClient.subscribeToTrades(symbols, callback, resultCallback);
+
+    try {
+      TimeUnit.SECONDS.sleep(30);
+    } catch (InterruptedException e) {
+      fail();
     }
-
-    @After
-    public void after() {
-        wsClient.close();
+    try {
+      TimeUnit.SECONDS.sleep(5);
+    } catch (InterruptedException e) {
+      fail();
     }
+  }
 
-    @Test
-    public void TestTimeFlow() {
-        TimeFlow.reset();
-        Boolean goodFLow;
-        goodFLow = TimeFlow.checkNextTimestamp("2021-01-27T15:47:54.418Z");
-        if (!goodFLow) {
-            fail();
-        }
-        goodFLow = TimeFlow.checkNextTimestamp("2021-01-27T15:47:55.118Z");
-        if (!goodFLow) {
-            fail();
-        }
-        goodFLow = TimeFlow.checkNextTimestamp("2021-01-27T15:47:54.418Z");
-        if (goodFLow) {
-            fail();
-        }
+  @Test
+  public void testSubscribeToCandles() {
+    List<String> symbols = Arrays.asList("EOSETH");
+
+    Callback<Map<String, List<WSCandle>>> callback = new Callback<Map<String, List<WSCandle>>>() {
+      @Override
+      public void resolve(Map<String, List<WSCandle>> result) {
+        assertTrue(result.size() != 0);
+        result.forEach((k, v) -> v.forEach(Checker.checkWSCandle));
+      }
+    };
+
+    wsClient.subscribeToCandles(symbols, Period._1_MINUTES, null, callback, null);
+
+    try {
+      TimeUnit.SECONDS.sleep(30);
+    } catch (InterruptedException e) {
+      fail();
     }
+  }
 
-    @Test
-    public void testTickerSubscription() {
-        TimeFlow.reset();
-        String symbol = "ETHBTC";
-        wsClient.subscribeToTicker(symbol,
-            new Callback<Ticker>() {
+  @Test
+  public void testSubscribeToMiniTicker() {
+    List<String> symbols = Arrays.asList("EOSETH");
 
-                @Override
-                public void resolve(Ticker result) {
-                    if (!TimeFlow.checkNextTimestamp(result.getTimestamp())) fail();
-                }
-            },
-            resultCallback
-        );
-        try {TimeUnit.MINUTES.sleep(3);} catch (InterruptedException e) {fail();}
+    Callback<Map<String, WSCandle>> callback = new Callback<Map<String, WSCandle>>() {
+      @Override
+      public void resolve(Map<String, WSCandle> result) {
+        System.out.println(result);
+        result.forEach((k, v) -> Checker.checkWSCandle.accept(v));
+      }
+    };
 
-        wsClient.unsubscribeToTicker(symbol, resultCallback);
-        try {TimeUnit.SECONDS.sleep(5);} catch (InterruptedException e) {fail();}
+    wsClient.subscribeToMiniTicker(symbols, TickerSpeed._1_SECONDS, callback, null);
+
+    try {
+      TimeUnit.SECONDS.sleep(30);
+    } catch (InterruptedException e) {
+      fail();
     }
+  }
 
-    @Test
-    public void testOrderbookSubscription() {
+  @Test
+  public void testSubscribeToTicker() {
+    List<String> symbols = Arrays.asList("EOSETH");
 
-        String symbol = "ETHBTC";
+    Callback<Map<String, WSTicker>> callback = new Callback<Map<String, WSTicker>>() {
+      @Override
+      public void resolve(Map<String, WSTicker> result) {
+        System.out.println(result);
+        result.forEach((k, v) -> Checker.checkWSTicker.accept(v));
+      }
+    };
 
-        Callback<OrderBook> callback = new Callback<OrderBook>() {
-			@Override
-			public void resolve(OrderBook result) {
-                SequenceFlow.checkNextSequence(result.getSequence());
-                BigDecimal size;
-                BigDecimal zero;
-                BigDecimal actualPrice;
-                BigDecimal lastPrice = null;
-                for (OrderbookLevel entry: result.getAsk()) {
-                    size = new BigDecimal(entry.getAmount());
-                    zero = new BigDecimal("0.00");
-                    if (size.compareTo(zero) == 0) fail();
-                    actualPrice = new BigDecimal(entry.getPrice());
-                    if (lastPrice != null) {
-                        if (lastPrice.compareTo(actualPrice) == 1) fail();
-                    }
-                    lastPrice = actualPrice;
+    wsClient.subscribeToTicker(symbols, TickerSpeed._1_SECONDS, callback, null);
 
-                }
-                lastPrice = null;
-                for (OrderbookLevel entry: result.getBid()) {
-                    size = new BigDecimal(entry.getAmount());
-                    zero = new BigDecimal("0.00");
-                    if (size.compareTo(zero) == 0) fail();
-                    actualPrice = new BigDecimal(entry.getPrice());
-                    if (lastPrice != null) {
-                        if (lastPrice.compareTo(actualPrice) == -1) fail();
-                    }
-                    lastPrice = actualPrice;
-                }
-			}
-        };
-
-        wsClient.subscribeToOrderbook(symbol, callback, resultCallback);
-
-        try {TimeUnit.MINUTES.sleep(7);} catch (InterruptedException e) {fail();}
-
-        wsClient.unsubscribeToOrderbook(symbol, resultCallback);
-
-        try {TimeUnit.SECONDS.sleep(5);} catch (InterruptedException e) {fail();}
+    try {
+      TimeUnit.SECONDS.sleep(30);
+    } catch (InterruptedException e) {
+      fail();
     }
+  }
 
-    @Test
-    public void testTradesSubscription() {
-        String symbol = "ETHBTC";
+  @Test
+  public void testFullOrderbook() {
+    List<String> symbols = Arrays.asList("EOSETH");
 
-        Callback<List<PublicTrade>> callback = new Callback<List<PublicTrade>>() {
-			@Override
-			public void resolve(List<PublicTrade> result) {
-                result.forEach(Checker.checkPublicTrade);
-			}
-        };
+    Callback<Map<String, WSOrderBook>> callback = new Callback<Map<String, WSOrderBook>>() {
+      @Override
+      public void resolve(Map<String, WSOrderBook> result) {
+        System.out.println(result);
+        result.forEach((k, v) -> Checker.checkWSOrderBook.accept(v));
+      }
+    };
 
-        wsClient.subscribeToTrades(symbol, null, callback, resultCallback);
+    wsClient.subscribeToFullOrderBook(symbols, callback, null);
 
-        try {TimeUnit.MINUTES.sleep(5);} catch (InterruptedException e) {fail();}
-
-        wsClient.unsubscribeToTrades(symbol, resultCallback);
-
-        try {TimeUnit.SECONDS.sleep(5);} catch (InterruptedException e) {fail();}
+    try {
+      TimeUnit.SECONDS.sleep(30);
+    } catch (InterruptedException e) {
+      fail();
     }
+  }
 
+  @Test
+  public void testPartialOrderbook() {
+    List<String> symbols = Arrays.asList("EOSETH");
 
-    @Test
-    public void testSubscribeToCandles() {
-        String symbol = "ETHBTC";
+    Callback<Map<String, WSOrderBook>> callback = new Callback<Map<String, WSOrderBook>>() {
+      @Override
+      public void resolve(Map<String, WSOrderBook> result) {
+        System.out.println(result);
+        result.forEach((k, v) -> Checker.checkWSOrderBook.accept(v));
+      }
+    };
 
-        Callback<List<Candle>> callback = new Callback<List<Candle>>() {
-			@Override
-			public void resolve(List<Candle> result) {
-                assertTrue(result.size() != 0);
-                result.forEach(Checker.checkCandle);
-			}
-        };
+    wsClient.subscribeToPartialOrderBook(symbols, Depth._5, OBSpeed._500_MILISECONDS, callback, null);
 
-        wsClient.subscribeToCandles(symbol, Period._1_MINUTES, null, callback, resultCallback);
-
-        try {TimeUnit.MINUTES.sleep(3);} catch (InterruptedException e) {fail();}
-
-        wsClient.unsubscribeToTrades(symbol, resultCallback);
-
-        try {TimeUnit.SECONDS.sleep(10);} catch (InterruptedException e) {fail();}
+    try {
+      TimeUnit.SECONDS.sleep(30);
+    } catch (InterruptedException e) {
+      fail();
     }
+  }
+
+  @Test
+  public void testOrderbookTop() {
+    List<String> symbols = Arrays.asList("EOSETH");
+
+    Callback<Map<String, WSOrderBookTop>> callback = new Callback<Map<String, WSOrderBookTop>>() {
+      @Override
+      public void resolve(Map<String, WSOrderBookTop> result) {
+        System.out.println(result);
+        result.forEach((k, v) -> Checker.checkWSOrderBookTop.accept(v));
+      }
+    };
+
+    wsClient.subscribeToTopOfOrderBook(symbols, OBSpeed._500_MILISECONDS, callback, null);
+
+    try {
+      TimeUnit.SECONDS.sleep(30);
+    } catch (InterruptedException e) {
+      fail();
+    }
+  }
+
 }

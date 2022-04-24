@@ -60,7 +60,6 @@ public class HMAC {
       byte[] macData = sha256Hmac.doFinal(message.getBytes(charset));
       return new String(Hex.encodeHex(macData));
     } catch (Exception e) {
-      System.out.println("signing failed");
       return null;
     }
   }

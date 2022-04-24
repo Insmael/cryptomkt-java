@@ -6,17 +6,18 @@ import java.util.List;
 import java.util.Map;
 
 import com.cryptomarket.sdk.exceptions.CryptomarketArgumentException;
+import com.cryptomarket.sdk.models.Order;
 
 import org.jetbrains.annotations.Nullable;
 
 public class ParamsBuilder {
-  private Map<String, String> params;
+  private Map<String, Object> params;
 
   public ParamsBuilder() {
-    params = new HashMap<String, String>();
+    params = new HashMap<String, Object>();
   }
 
-  public String remove(String argName) {
+  public Object remove(String argName) {
     return params.remove(argName);
   }
 
@@ -43,12 +44,18 @@ public class ParamsBuilder {
     });
     if (missing.size() > 0) {
       missing.replaceAll(ParamsBuilder::fromSnakeCaseToCamelCase);
-      throw new CryptomarketArgumentException("Missing required parameters: "+String.join(", ", missing));
+      throw new CryptomarketArgumentException("Missing required parameters: " + String.join(", ", missing));
     }
     return this;
   }
 
   public Map<String, String> build() {
+    Map<String, String> mapStrStr = new HashMap<>();
+    this.params.forEach((k, v) -> mapStrStr.put(k, v.toString()));
+    return mapStrStr;
+  }
+
+  public Map<String, Object> buildObjectMap() {
     return this.params;
   }
 
@@ -106,7 +113,7 @@ public class ParamsBuilder {
     return this.addArg(ArgNames.TILL, arg);
   }
 
-  //TODO leave only one limit. string or integer, not both.
+  // TODO leave only one limit. string or integer, not both.
   public ParamsBuilder limit(@Nullable Integer arg) {
     return this.addArg(ArgNames.LIMIT, arg);
   }
@@ -301,6 +308,24 @@ public class ParamsBuilder {
 
   public ParamsBuilder identifier(String arg) {
     return this.addArg(ArgNames.IDENTIFIER, arg);
+  }
+
+  public ParamsBuilder orderListID(String orderListID) {
+    return this.addArg(ArgNames.ORDER_LIST_ID, orderListID);
+  }
+
+  public ParamsBuilder contingencyType(ContingencyType contingencyType) {
+    return this.addArg(ArgNames.CONTINGENCY_TYPE, contingencyType);
+  }
+
+  public ParamsBuilder symbolList(List<String> symbols) {
+    this.params.put(ArgNames.SYMBOLS, symbols);
+    return this;
+  }
+
+  public ParamsBuilder orders(List<Order> orders) {
+    // TODO implement
+    return this;
   }
 
 }

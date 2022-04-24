@@ -54,4 +54,8 @@ public class ArgNames {
   public static final String TRANSFER_BY = "by";
   public static final String IDENTIFIER = "identifier";
   public static final String ORDER_ID = "order_id";
+  public static final String ORDER_LIST_ID = "order_list_id";
+  public static final String CONTINGENCY_TYPE = "contingency_type";
+  public static final String ORDERS = "orders";
+
 }

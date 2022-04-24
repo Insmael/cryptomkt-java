@@ -1,304 +1,229 @@
 package com.cryptomarket.sdk.websocket;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.cryptomarket.params.SortBy;
+import com.cryptomarket.params.TickerSpeed;
+import com.cryptomarket.params.Depth;
+import com.cryptomarket.params.OBSpeed;
+import com.cryptomarket.params.ParamsBuilder;
 import com.cryptomarket.params.Period;
-import com.cryptomarket.params.Sort;
 import com.cryptomarket.sdk.Adapter;
 import com.cryptomarket.sdk.Callback;
-import com.cryptomarket.sdk.exceptions.CryptomarketAPIException;
+import com.cryptomarket.sdk.exceptions.CryptomarketSDKException;
 import com.cryptomarket.sdk.models.Candle;
-import com.cryptomarket.sdk.models.Currency;
-import com.cryptomarket.sdk.models.ErrorBody;
-import com.cryptomarket.sdk.models.OrderBook;
-import com.cryptomarket.sdk.models.PublicTrade;
-import com.cryptomarket.sdk.models.Symbol;
-import com.cryptomarket.sdk.models.Ticker;
+import com.cryptomarket.sdk.models.WSCandle;
 import com.cryptomarket.sdk.models.WSJsonResponse;
+import com.cryptomarket.sdk.models.WSOrderBook;
+import com.cryptomarket.sdk.models.WSOrderBookTop;
+import com.cryptomarket.sdk.models.WSPublicTrade;
+import com.cryptomarket.sdk.models.WSTicker;
 import com.cryptomarket.sdk.websocket.interceptor.Interceptor;
 import com.cryptomarket.sdk.websocket.interceptor.InterceptorFactory;
-import com.squareup.moshi.JsonDataException;
 
 public class CryptomarketWSPublicClientImpl extends ClientBase implements CryptomarketWSPublicClient {
-    OrderbookCache OBCache = new OrderbookCache();
-    protected Adapter adapter = new Adapter();
+  OrderbookCache OBCache = new OrderbookCache();
+  protected Adapter adapter = new Adapter();
 
-    static class SP {
-        String symbol = "";
-        String period = "";
+  static class CandleListInData {
+    List<Candle> data;
+  }
+
+  static class UpdateData {
+    Map<String, List<WSPublicTrade>> update;
+  }
+
+  static class SnapshotData {
+    Map<String, List<WSPublicTrade>> snapshot;
+  }
+
+  static class DataData {
+    Map<String, List<WSPublicTrade>> data;
+  }
+
+  public CryptomarketWSPublicClientImpl() throws IOException {
+    super("wss://api.exchange.cryptomkt.com/api/3/ws/public");
+    Map<String, String> subsKeys = this.getSubscritpionKeys();
+    //
+    subsKeys.put("trades", "trades");
+  }
+
+  @Override
+  public void handle(String json) throws CryptomarketSDKException {
+    WSJsonResponse response = adapter.objectFromJson(json, WSJsonResponse.class);
+    if (response.getChannel() != null) {
+      handleNotification(response);
+    } else if (response.getId() != null) {
+      handleResponse(response);
+    } else {
+      // do nothing
     }
 
-    static class PublicTradeListInData {
-        List<PublicTrade> data;
+  }
+
+  @Override
+  protected void handleNotification(WSJsonResponse response) {
+    String channel = response.getChannel();
+    String key = buildKey(channel);
+    Interceptor interceptor = interceptorCache.getSubscriptionInterceptor(key);
+    if (interceptor != null) {
+      interceptor.makeCall(response);
+    } else {
     }
+  }
 
-    static class CandleListInData {
-        List<Candle> data;
+  private void subscriptionByChannel(String channel, Map<String, Object> params, Interceptor feedInterceptor,
+      Interceptor resultInterceptor) {
+    String key = buildKey(channel);
+    interceptorCache.storeSubscriptionInterceptor(key, feedInterceptor);
+    Payload payload = new Payload("subscribe", channel, params);
+    if (resultInterceptor != null) {
+      Integer id = interceptorCache.storeInterceptor(resultInterceptor);
+      payload.id = id;
     }
+    String json = payloadAdapter.toJson(payload);
+    websocket.send(json);
+  };
 
-    public CryptomarketWSPublicClientImpl() throws IOException {
-        super("wss://api.exchange.cryptomkt.com/api/2/ws/public");
-        Map<String, String> subsKeys = this.getSubscritpionKeys();
-        // tickers
-        subsKeys.put("subscribeTicker","tickers");
-        subsKeys.put("unsubscribeTicker","tickers");
-        subsKeys.put("ticker","tickers");
-        //orderbooks
-        subsKeys.put("subscribeOrderbook","orderbooks");
-        subsKeys.put("unsubscribeOrderbook","orderbooks");
-        subsKeys.put("snapshotOrderbook","orderbooks");
-        subsKeys.put("updateOrderbook","orderbooks");
-        // trades
-        subsKeys.put("subscribeTrades","trades");
-        subsKeys.put("unsubscribeTrades","trades");
-        subsKeys.put("snapshotTrades","trades");
-        subsKeys.put("updateTrades","trades");
-        // candles
-        subsKeys.put("subscribeCandles","candles");
-        subsKeys.put("unsubscribeCandles","candles");
-        subsKeys.put("snapshotCandles","candles");
-        subsKeys.put("updateCandles","candles");
-    }
+  @Override
+  protected String buildKey(String channel, Map<String, Object> params) {
+    return this.getSubscritpionKeys().get(channel);
+  }
 
-    @Override
-    protected void handleNotification(WSJsonResponse response) {
-        String method = response.getMethod();
-        SP sp;
-        try {
-            sp = adapter.objectFromValue(response.getParams(), SP.class);
-        } catch (JsonDataException e) { // if is a list instead, as in activeOrders
-            sp = new SP();
-        }
-        String key = buildKey(method, sp.symbol, sp.period);
-        Interceptor interceptor = interceptorCache.getSubscriptionInterceptor(key);
-        if (this.isOrderbookFeed(method)) {
-            OBCache.update(method, key, response);
-            if (OBCache.orderbookBroken(key)) {
-                OBCache.waitOrderbook(key);
-                Map<String, Object> params = new HashMap<>();
-                params.put("symbol", sp.symbol);
-                this.sendById("subscribeOrderbook", params, null);
-                return;
-            }
-            if (OBCache.orderbookWaiting(key)) return;
-            if (interceptor != null) interceptor.makeCall(OBCache.getOrderbook(key));
-            return;
-        }
-        if (interceptor != null) interceptor.makeCall(response);
-    }
+  // PUBLIC METHODS
+  @Override
+  public void subscribeToTrades(List<String> symbols, Callback<Map<String, List<WSPublicTrade>>> callback,
+      Callback<List<String>> resultCallback) {
+    ParamsBuilder params = new ParamsBuilder().symbolList(symbols);
+    Interceptor interceptor = InterceptorFactory.newMapStringListOfChanneledWSResponseObject(callback,
+        WSPublicTrade.class);
+    Interceptor resultInterceptor = (resultCallback == null)
+        ? null
+        : InterceptorFactory.ofSubscriptionResponse(resultCallback);
+    subscriptionByChannel("trades", params.buildObjectMap(), interceptor, resultInterceptor);
+  }
 
-    @Override
-    protected String buildKey(String method, Map<String, Object> params) {
-        String symbol = params.containsKey("symbol") ? String.valueOf(params.get("symbol")) : "";
-        String period = params.containsKey("period") ? String.valueOf(params.get("period")) : "";
-        return buildKey(method, symbol, period);
-    }
+  @Override
+  public void subscribeToCandles(List<String> symbols, Period period, Integer limit,
+      Callback<Map<String, List<WSCandle>>> callback, Callback<List<String>> resultCallback) {
+    ParamsBuilder params = new ParamsBuilder().symbolList(symbols);
+    Interceptor interceptor = InterceptorFactory.newMapStringListOfChanneledWSResponseObject(callback, WSCandle.class);
+    Interceptor resultInterceptor = (resultCallback == null)
+        ? null
+        : InterceptorFactory.ofSubscriptionResponse(resultCallback);
+    subscriptionByChannel(String.format("candles/%s", period), params.buildObjectMap(), interceptor, resultInterceptor);
+  }
 
-    private String buildKey(String method, String symbol, String period) {
-        String methodKey = this.getSubscritpionKeys().get(method);
-        String key = methodKey + ":" + symbol + ":" + period;
-        return key.toUpperCase();
-    }
+  @Override
+  public void subscribeToMiniTicker(List<String> symbols, TickerSpeed speed, Callback<Map<String, WSCandle>> callback,
+      Callback<List<String>> resultCallback) {
+    ParamsBuilder params = new ParamsBuilder().symbolList(symbols);
+    Interceptor interceptor = InterceptorFactory.newOfChanneledWSResponse(callback, WSCandle.class);
+    Interceptor resultInterceptor = (resultCallback == null)
+        ? null
+        : InterceptorFactory.ofSubscriptionResponse(resultCallback);
+    subscriptionByChannel(String.format("ticker/price/%s", speed), params.buildObjectMap(), interceptor,
+        resultInterceptor);
+  }
 
-    public boolean isOrderbookFeed(String method) {
-        if (getSubscritpionKeys().get(method).equals("orderbooks")) return true;
-        return false;
-    }
+  @Override
+  public void subscribeToMiniTickerInBatches(List<String> symbols, TickerSpeed speed,
+      Callback<Map<String, WSCandle>> callback,
+      Callback<List<String>> resultCallback) {
+    ParamsBuilder params = new ParamsBuilder().symbolList(symbols);
+    Interceptor interceptor = InterceptorFactory.newOfChanneledWSResponse(callback, WSCandle.class);
+    Interceptor resultInterceptor = (resultCallback == null)
+        ? null
+        : InterceptorFactory.ofSubscriptionResponse(resultCallback);
+    subscriptionByChannel(String.format("ticker/price/%s/batch", speed), params.buildObjectMap(), interceptor,
+        resultInterceptor);
+  }
 
-    @Override
-    public void getCurrencies(Callback<List<Currency>> callback) {
-        Map<String, Object> params = new HashMap<>();
-        sendById(
-            "getCurrencies",
-            params,
-            InterceptorFactory.newOfWSResponseList(callback, Currency.class));
-    }
+  @Override
+  public void subscribeToTicker(List<String> symbols, TickerSpeed speed, Callback<Map<String, WSTicker>> callback,
+      Callback<List<String>> resultCallback) {
+    ParamsBuilder params = new ParamsBuilder().symbolList(symbols);
+    Interceptor interceptor = InterceptorFactory.newOfChanneledWSResponse(callback, WSTicker.class);
+    Interceptor resultInterceptor = (resultCallback == null)
+        ? null
+        : InterceptorFactory.ofSubscriptionResponse(resultCallback);
+    subscriptionByChannel(String.format("ticker/%s", speed), params.buildObjectMap(), interceptor, resultInterceptor);
 
-    @Override
-    public void getCurrency(String currency, Callback<Currency> callback) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("currency", currency);
-        sendById("getCurrency", params, InterceptorFactory.newOfWSResponseObject(callback, Currency.class));
-    }
+  }
 
-    @Override
-    public void getSymbols(Callback<List<Symbol>> callback) {
-        Map<String, Object> params = new HashMap<>();
-        sendById("getSymbols", params, InterceptorFactory.newOfWSResponseList(callback, Symbol.class));
-    }
+  @Override
+  public void subscribeToTickerInBatches(List<String> symbols, TickerSpeed speed,
+      Callback<Map<String, WSTicker>> callback,
+      Callback<List<String>> resultCallback) {
+    ParamsBuilder params = new ParamsBuilder().symbolList(symbols);
+    Interceptor interceptor = InterceptorFactory.newOfChanneledWSResponse(callback, WSTicker.class);
+    Interceptor resultInterceptor = (resultCallback == null)
+        ? null
+        : InterceptorFactory.ofSubscriptionResponse(resultCallback);
+    subscriptionByChannel(String.format("ticker/%s/batch", speed), params.buildObjectMap(), interceptor,
+        resultInterceptor);
+  }
 
-    @Override
-    public void getSymbol(String symbol, Callback<Symbol> callback) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("symbol", symbol);
-        sendById("getSymbol", params, InterceptorFactory.newOfWSResponseObject(callback, Symbol.class));
-    }
+  @Override
+  public void subscribeToFullOrderBook(List<String> symbols, Callback<Map<String, WSOrderBook>> callback,
+      Callback<List<String>> resultCallback) {
+    ParamsBuilder params = new ParamsBuilder().symbolList(symbols);
+    Interceptor interceptor = InterceptorFactory.newOfChanneledWSResponse(callback, WSOrderBook.class);
+    Interceptor resultInterceptor = (resultCallback == null)
+        ? null
+        : InterceptorFactory.ofSubscriptionResponse(resultCallback);
+    subscriptionByChannel("orderbook/full", params.buildObjectMap(), interceptor, resultInterceptor);
 
-    @Override
-    public void subscribeToTicker(String symbol, Callback<Ticker> callback, Callback<Boolean> resultCallback) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("symbol", symbol);
-        Interceptor interceptor = new Interceptor() {
-            @Override
-            public void makeCall(WSJsonResponse response) {
-                ErrorBody error = response.getError();
-                if (error != null) {
-                    callback.reject(new CryptomarketAPIException(error));
-                } else {
-                    Ticker ticker = adapter.objectFromValue(response.getParams(), Ticker.class);
-                    callback.resolve(ticker);
-                }
-            }
-        };
-        Interceptor resultInterceptor =
-            (resultCallback == null) ?
-            null :
-            InterceptorFactory.newOfWSResponseObject(resultCallback, Boolean.class);
+  }
 
-        sendSubscription("subscribeTicker", params, interceptor, resultInterceptor);
-    }
+  @Override
+  public void subscribeToPartialOrderBook(List<String> symbols, Depth depth, OBSpeed speed,
+      Callback<Map<String, WSOrderBook>> callback, Callback<List<String>> resultCallback) {
+    ParamsBuilder params = new ParamsBuilder().symbolList(symbols);
+    Interceptor interceptor = InterceptorFactory.newOfChanneledWSResponse(callback, WSOrderBook.class);
+    Interceptor resultInterceptor = (resultCallback == null)
+        ? null
+        : InterceptorFactory.ofSubscriptionResponse(resultCallback);
+    subscriptionByChannel(String.format("orderbook/%s/%s", depth, speed), params.buildObjectMap(), interceptor,
+        resultInterceptor);
+  }
 
-    @Override
-    public void unsubscribeToTicker(String symbol, Callback<Boolean> callback) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("symbol", symbol);
-        Interceptor interceptor =
-            (callback == null) ?
-            null :
-            InterceptorFactory.newOfWSResponseObject(callback, Boolean.class);
-        sendUnsubscription("unsubscribeTicker", params, interceptor);
-    }
+  @Override
+  public void subscribeToPartialOrderBookInBatches(List<String> symbols, Depth depth, OBSpeed speed,
+      Callback<Map<String, WSOrderBook>> callback, Callback<List<String>> resultCallback) {
+    ParamsBuilder params = new ParamsBuilder().symbolList(symbols);
+    Interceptor interceptor = InterceptorFactory.newOfChanneledWSResponse(callback, WSOrderBook.class);
+    Interceptor resultInterceptor = (resultCallback == null)
+        ? null
+        : InterceptorFactory.ofSubscriptionResponse(resultCallback);
+    subscriptionByChannel(String.format("orderbook/%s/%s/batch", depth, speed), params.buildObjectMap(), interceptor,
+        resultInterceptor);
+  }
 
-    @Override
-    public void subscribeToOrderbook(String symbol, Callback<OrderBook> callback, Callback<Boolean> resultCallback) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("symbol", symbol);
-        Interceptor interceptor = new Interceptor() {
-            @Override
-            public void makeCall(OrderBook orderBook) {
-                callback.resolve(orderBook);
-            }
-        };
-        Interceptor resultInterceptor =
-            (resultCallback == null) ?
-            null :
-            InterceptorFactory.newOfWSResponseObject(resultCallback, Boolean.class);
-        sendSubscription("subscribeOrderbook", params, interceptor, resultInterceptor);
+  @Override
+  public void subscribeToTopOfOrderBook(List<String> symbols, OBSpeed speed,
+      Callback<Map<String, WSOrderBookTop>> callback,
+      Callback<List<String>> resultCallback) {
+    ParamsBuilder params = new ParamsBuilder().symbolList(symbols);
+    Interceptor interceptor = InterceptorFactory.newOfChanneledWSResponse(callback, WSOrderBookTop.class);
+    Interceptor resultInterceptor = (resultCallback == null)
+        ? null
+        : InterceptorFactory.ofSubscriptionResponse(resultCallback);
+    subscriptionByChannel(String.format("orderbook/top/%s", speed), params.buildObjectMap(), interceptor,
+        resultInterceptor);
+  }
 
-    }
-
-    @Override
-    public void unsubscribeToOrderbook(String symbol, Callback<Boolean> callback) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("symbol", symbol);
-        Interceptor interceptor =
-            (callback == null) ?
-            null :
-            InterceptorFactory.newOfWSResponseObject(callback, Boolean.class);
-        sendUnsubscription("unsubscribeOrderbook", params, interceptor);
-    }
-
-    @Override
-    public void subscribeToTrades(String symbol, Integer limit, Callback<List<PublicTrade>> callback, Callback<Boolean> resultCallback) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("symbol", symbol);
-        if (limit != null) params.put("limit", limit.toString());
-        Interceptor interceptor = new Interceptor() {
-            @Override
-            public void makeCall(WSJsonResponse response) {
-                ErrorBody error = response.getError();
-                if (error != null) {
-                    callback.reject(new CryptomarketAPIException(error));
-                } else {
-                    PublicTradeListInData trades = adapter.objectFromValue(response.getParams(), PublicTradeListInData.class);
-                    callback.resolve(trades.data);
-                }
-            }
-        };
-        Interceptor resultInterceptor =
-            (resultCallback == null) ?
-            null :
-            InterceptorFactory.newOfWSResponseObject(resultCallback, Boolean.class);
-        sendSubscription("subscribeTrades", params, interceptor, resultInterceptor);
-    }
-
-    @Override
-    public void unsubscribeToTrades(String symbol, Callback<Boolean> callback) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("symbol", symbol);
-        Interceptor interceptor =
-            (callback == null) ?
-            null :
-            InterceptorFactory.newOfWSResponseObject(callback, Boolean.class);
-        sendUnsubscription("unsubscribeTrades", params, interceptor);
-    }
-
-    @Override
-    public void getTrades(String symbol, Sort sort, SortBy by, String from, String till, Integer limit, Integer offset,
-            Callback<List<PublicTrade>> callback) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("symbol", symbol);
-        if (sort != null) params.put("sort", sort.toString());
-        if (by != null) params.put("by", by.toString());
-        if (from != null) params.put("from", from);
-        if (till != null) params.put("till", till);
-        if (limit != null) params.put("limit", limit.toString());
-        if (offset != null) params.put("offset", offset.toString());
-        sendById("getTrades", params, new Interceptor() {
-            @Override
-            public void makeCall(WSJsonResponse response) {
-                ErrorBody error = response.getError();
-                if (error != null) {
-                    callback.reject(new CryptomarketAPIException(error));
-                } else {
-                    PublicTradeListInData trades = adapter.objectFromValue(response.getResult(), PublicTradeListInData.class);
-                    callback.resolve(trades.data);
-                }
-            }
-        });
-    }
-
-    @Override
-    public void subscribeToCandles(String symbol, Period period, Integer limit, Callback<List<Candle>> callback,
-            Callback<Boolean> resultCallback) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("symbol", symbol);
-        if (period == null) period = Period._30_MINUTES;
-        params.put("period", period.toString());
-        if (limit != null) params.put("limit", limit.toString());
-        Interceptor interceptor = new Interceptor() {
-            @Override
-            public void makeCall(WSJsonResponse response) {
-                ErrorBody error = response.getError();
-                if (error != null) {
-                    callback.reject(new CryptomarketAPIException(error));
-                } else {
-                    CandleListInData candles = adapter.objectFromValue(response.getParams(), CandleListInData.class);
-                    callback.resolve(candles.data);
-                }
-            }
-        };
-        Interceptor resultInterceptor =
-            (resultCallback == null) ?
-            null :
-            InterceptorFactory.newOfWSResponseObject(resultCallback, Boolean.class);
-        sendSubscription("subscribeCandles", params, interceptor, resultInterceptor);
-    }
-
-    @Override
-    public void unsubscribeToCandles(String symbol, Period period, Callback<Boolean> callback) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("symbol", symbol);
-        if (period == null) period = Period._30_MINUTES;
-        params.put("period", period.toString());
-        Interceptor interceptor =
-            (callback == null) ?
-            null :
-            InterceptorFactory.newOfWSResponseObject(callback, Boolean.class);
-        sendUnsubscription("unsubscribeCandles", params, interceptor);
-    }
+  @Override
+  public void subscribeToTopOfOrderBookInBatches(List<String> symbols, OBSpeed speed,
+      Callback<Map<String, WSOrderBookTop>> callback,
+      Callback<List<String>> resultCallback) {
+    ParamsBuilder params = new ParamsBuilder().symbolList(symbols);
+    Interceptor interceptor = InterceptorFactory.newOfChanneledWSResponse(callback, WSOrderBookTop.class);
+    Interceptor resultInterceptor = (resultCallback == null)
+        ? null
+        : InterceptorFactory.ofSubscriptionResponse(resultCallback);
+    subscriptionByChannel(String.format("orderbook/top/%s/batch", speed), params.buildObjectMap(), interceptor,
+        resultInterceptor);
+  }
 }

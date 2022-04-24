@@ -796,7 +796,8 @@ public interface CryptomarketRestClient {
    * transaction got executed immediately. It has to be processed first and may
    * eventually be rolled back
    * <p>
-   * To see whether a transaction has been finalized, call {@link #getTransaction(String)}
+   * To see whether a transaction has been finalized, call
+   * {@link #getTransaction(String)}
    * <p>
    * Requires the "Withdraw cryptocurrencies" API key Access Right
    * <p>
@@ -882,7 +883,8 @@ public interface CryptomarketRestClient {
    * transaction got executed immediately. It has to be processed first and may
    * eventually be rolled back
    * <p>
-   * To see whether a transaction has been finalized, call {@link #getTransaction(String)}
+   * To see whether a transaction has been finalized, call
+   * {@link #getTransaction(String)}
    * <p>
    * Requires the "Payment information" API key Access Right
    * <p>
@@ -939,6 +941,23 @@ public interface CryptomarketRestClient {
       AccountType destination)
       throws CryptomarketSDKException;
 
+  /**
+   * Transfer funds between account types
+   * <p>
+   * 'source' param and 'destination' param must be different account types
+   * <p>
+   * Requires the "Payment information" API key Access Right
+   * <p>
+   * https://api.exchange.cryptomkt.com/#transfer-between-wallet-and-exchange
+   *
+   * @param paramsBuilder param builder with the other parameters as chained methods
+   * @param currency      currency code for transfering
+   * @param amount        amount to be transfered
+   * @param source        transfer source account type. Either 'wallet' or 'spot'
+   * @param destination   transfer source account type. Either 'wallet' or 'spot'
+   * @return the transaction identifier of the transfer
+   * @throws CryptomarketSDKException
+   */
   public String transferBetweenWalletAndExchange(
       ParamsBuilder paramsBuilder)
       throws CryptomarketSDKException;

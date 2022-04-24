@@ -27,6 +27,10 @@ import com.cryptomarket.sdk.models.Ticker;
 import com.cryptomarket.sdk.models.TickerPrice;
 import com.cryptomarket.sdk.models.Trade;
 import com.cryptomarket.sdk.models.Transaction;
+import com.cryptomarket.sdk.models.WSCandle;
+import com.cryptomarket.sdk.models.WSOrderBook;
+import com.cryptomarket.sdk.models.WSOrderBookTop;
+import com.cryptomarket.sdk.models.WSTicker;
 
 public class Checker {
 
@@ -71,6 +75,36 @@ public class Checker {
         obj.getVolume(),
         obj.getVolumeQuote(),
         obj.getTimestamp()));
+    fields.forEach(checkString);
+  };
+  static Consumer<WSTicker> checkWSTicker = obj -> {
+    List<String> fields = new ArrayList<>(Arrays.asList(
+        obj.getOpen(),
+        obj.getClose(),
+        obj.getHigh(),
+        obj.getLow(),
+        obj.getBestAsk(),
+        obj.getBestAskQuantity(),
+        obj.getBestBid(),
+        obj.getBestBidQuantity(),
+        obj.getVolumeBase(),
+        obj.getVolumeQuote(),
+        obj.getTimestamp().toString()));
+    fields.forEach(checkString);
+  };
+  static Consumer<WSOrderBook> checkWSOrderBook = obj -> {
+    List<String> fields = new ArrayList<>(Arrays.asList(
+        obj.getTimestamp().toString(),
+        obj.getSequence().toString()));
+    fields.forEach(checkString);
+  };
+  static Consumer<WSOrderBookTop> checkWSOrderBookTop = obj -> {
+    List<String> fields = new ArrayList<>(Arrays.asList(
+        obj.getTimestamp().toString(),
+        obj.getBestAsk(),
+        obj.getBestAskQuantity(),
+        obj.getBestBid(),
+        obj.getBestBidQuantity()));
     fields.forEach(checkString);
   };
   static Consumer<Price> checkPrice = obj -> {
@@ -134,6 +168,16 @@ public class Checker {
         obj.getMax(),
         obj.getVolume(),
         obj.getVolumeQuote()));
+    fields.forEach(checkString);
+  };
+  static Consumer<WSCandle> checkWSCandle = obj -> {
+    List<String> fields = new ArrayList<>(Arrays.asList(
+        obj.getOpen(),
+        obj.getClose(),
+        obj.getHigh(),
+        obj.getLow(),
+        obj.getBaseVolume(),
+        obj.getQuoteVolume()));
     fields.forEach(checkString);
   };
   static Consumer<Balance> checkBalance = obj -> {
@@ -206,19 +250,20 @@ public class Checker {
   };
   static Consumer<Report> checkReport = obj -> {
     List<String> fields = new ArrayList<>(Arrays.asList(
-        obj.getId(),
-        obj.getClientOrderId(),
+        obj.getID(),
+        obj.getClientOrderID(),
         obj.getSymbol(),
-        obj.getSide(),
-        obj.getStatus(),
-        obj.getType(),
+        obj.getSide().toString(),
+        obj.getStatus().toString(),
+        obj.getType().toString(),
         obj.getTimeInForce(),
         obj.getQuantity(),
+        obj.getQuantityCumulative(),
         obj.getPrice(),
-        obj.getCumQuantity(),
         obj.getCreatedAt(),
         obj.getUpdatedAt(),
-        obj.getReportType()));
+        obj.getReportType().toString()));
+    System.out.print(obj);
     fields.forEach(checkString);
   };
 }

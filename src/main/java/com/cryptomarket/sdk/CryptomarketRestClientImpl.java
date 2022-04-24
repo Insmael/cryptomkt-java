@@ -219,7 +219,7 @@ public class CryptomarketRestClientImpl implements CryptomarketRestClient {
   public List<PublicTrade> getTradesOfSymbol(ParamsBuilder paramsBuilder)
       throws CryptomarketSDKException {
     paramsBuilder.checkRequired(Arrays.asList(ArgNames.SYMBOL));
-    String symbol = paramsBuilder.remove(ArgNames.SYMBOL);
+    String symbol = (String) paramsBuilder.remove(ArgNames.SYMBOL);
     String jsonResponse = httpClient.publicGet(
         String.format("public/trades/%s", symbol),
         paramsBuilder.build());
@@ -257,7 +257,7 @@ public class CryptomarketRestClientImpl implements CryptomarketRestClient {
   public OrderBook getOrderBookOfSymbol(ParamsBuilder paramsBuilder)
       throws CryptomarketSDKException {
     paramsBuilder.checkRequired(Arrays.asList(ArgNames.SYMBOL));
-    String symbol = paramsBuilder.remove(ArgNames.SYMBOL);
+    String symbol = (String) paramsBuilder.remove(ArgNames.SYMBOL);
     String jsonResponse = httpClient.publicGet(
         String.format("public/orderbook/%s", symbol),
         paramsBuilder.build());
@@ -278,7 +278,7 @@ public class CryptomarketRestClientImpl implements CryptomarketRestClient {
     paramsBuilder.checkRequired(Arrays.asList(
         ArgNames.SYMBOL,
         ArgNames.VOLUME));
-    String symbol = paramsBuilder.remove(ArgNames.SYMBOL);
+    String symbol = (String) paramsBuilder.remove(ArgNames.SYMBOL);
     String jsonResponse = httpClient.publicGet(
         String.format("public/orderbook/%s", symbol),
         paramsBuilder.build());
@@ -338,7 +338,7 @@ public class CryptomarketRestClientImpl implements CryptomarketRestClient {
   public List<Candle> getCandlesOfSymbol(ParamsBuilder paramsBuilder)
       throws CryptomarketSDKException {
     paramsBuilder.checkRequired(Arrays.asList(ArgNames.SYMBOL));
-    String symbol = paramsBuilder.remove(ArgNames.SYMBOL);
+    String symbol = (String) paramsBuilder.remove(ArgNames.SYMBOL);
     String jsonResponse = httpClient.publicGet(
         String.format("public/candles/%s", symbol),
         paramsBuilder.build());
@@ -449,7 +449,7 @@ public class CryptomarketRestClientImpl implements CryptomarketRestClient {
         ArgNames.CLIENT_ORDER_ID,
         ArgNames.NEW_CLIENT_ORDER_ID,
         ArgNames.QUANTITY));
-    String clientOrderID = paramsBuilder.remove(ArgNames.CLIENT_ORDER_ID);
+    String clientOrderID = (String) paramsBuilder.remove(ArgNames.CLIENT_ORDER_ID);
     String jsonResponse = httpClient.patch(
         String.format("spot/order/%s", clientOrderID),
         paramsBuilder.build());
@@ -749,7 +749,8 @@ public class CryptomarketRestClientImpl implements CryptomarketRestClient {
         "wallet/transfer",
         paramsBuilder.build());
     List<String> response = adapter.listFromJson(jsonResponse, String.class);
-    if (response.size() != 1) throw new CryptomarketSDKException("Invalid response format: "+ response.toString());
+    if (response.size() != 1)
+      throw new CryptomarketSDKException("Invalid response format: " + response.toString());
     return response.get(0);
   }
 
