@@ -3,7 +3,6 @@ package com.cryptomarket.sdk;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -13,11 +12,6 @@ import com.cryptomarket.params.Depth;
 import com.cryptomarket.params.OBSpeed;
 import com.cryptomarket.params.Period;
 import com.cryptomarket.params.TickerSpeed;
-import com.cryptomarket.sdk.models.Candle;
-import com.cryptomarket.sdk.models.OrderBook;
-import com.cryptomarket.sdk.models.OrderbookLevel;
-import com.cryptomarket.sdk.models.PublicTrade;
-import com.cryptomarket.sdk.models.Ticker;
 import com.cryptomarket.sdk.models.WSCandle;
 import com.cryptomarket.sdk.models.WSOrderBook;
 import com.cryptomarket.sdk.models.WSOrderBookTop;
@@ -105,7 +99,11 @@ public class TestWSPublicClientSubs {
       }
     };
 
-    wsClient.subscribeToTrades(symbols, callback, resultCallback);
+    wsClient.subscribeToTrades(
+        callback,
+        symbols,
+        null,
+        resultCallback);
 
     try {
       TimeUnit.SECONDS.sleep(30);
@@ -131,7 +129,12 @@ public class TestWSPublicClientSubs {
       }
     };
 
-    wsClient.subscribeToCandles(symbols, Period._1_MINUTES, null, callback, null);
+    wsClient.subscribeToCandles(
+        callback,
+        Period._1_MINUTES,
+        symbols,
+        null,
+        null);
 
     try {
       TimeUnit.SECONDS.sleep(30);
@@ -152,7 +155,11 @@ public class TestWSPublicClientSubs {
       }
     };
 
-    wsClient.subscribeToMiniTicker(symbols, TickerSpeed._1_SECONDS, callback, null);
+    wsClient.subscribeToMiniTicker(
+        callback,
+        TickerSpeed._1_SECONDS,
+        symbols,
+        null);
 
     try {
       TimeUnit.SECONDS.sleep(30);
@@ -173,7 +180,11 @@ public class TestWSPublicClientSubs {
       }
     };
 
-    wsClient.subscribeToTicker(symbols, TickerSpeed._1_SECONDS, callback, null);
+    wsClient.subscribeToTicker(
+        callback,
+        TickerSpeed._1_SECONDS,
+        symbols,
+        null);
 
     try {
       TimeUnit.SECONDS.sleep(30);
@@ -194,7 +205,10 @@ public class TestWSPublicClientSubs {
       }
     };
 
-    wsClient.subscribeToFullOrderBook(symbols, callback, null);
+    wsClient.subscribeToFullOrderBook(
+        callback,
+        symbols,
+        null);
 
     try {
       TimeUnit.SECONDS.sleep(30);
@@ -215,7 +229,12 @@ public class TestWSPublicClientSubs {
       }
     };
 
-    wsClient.subscribeToPartialOrderBook(symbols, Depth._5, OBSpeed._500_MILISECONDS, callback, null);
+    wsClient.subscribeToPartialOrderBook(
+        callback,
+        Depth._5,
+        OBSpeed._500_MILISECONDS,
+        symbols,
+        null);
 
     try {
       TimeUnit.SECONDS.sleep(30);
@@ -236,7 +255,11 @@ public class TestWSPublicClientSubs {
       }
     };
 
-    wsClient.subscribeToTopOfOrderBook(symbols, OBSpeed._500_MILISECONDS, callback, null);
+    wsClient.subscribeToTopOfOrderBook(
+        callback,
+        OBSpeed._500_MILISECONDS,
+        symbols,
+        null);
 
     try {
       TimeUnit.SECONDS.sleep(30);

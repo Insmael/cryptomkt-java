@@ -104,7 +104,7 @@ public class CryptomarketWSWalletClientImpl extends AuthClient implements Crypto
   }
 
   @Override
-  public void getWalletBalance(String currency, Callback<Balance> callback) {
+  public void getWalletBalanceOfCurrency(String currency, Callback<Balance> callback) {
     ParamsBuilder paramsBuilder = new ParamsBuilder().currency(currency);
     Interceptor interceptor = (callback == null) ? null
         : InterceptorFactory.newOfWSResponseObject(callback, Balance.class);

@@ -102,7 +102,7 @@ public class TestWSTradingClientSubs {
     } catch (InterruptedException e) {
       fail();
     }
-    wsClient.cancelOrder(clientOrderID, null);
+    wsClient.cancelSpotOrder(clientOrderID, null);
     try {
       TimeUnit.SECONDS.sleep(3);
     } catch (InterruptedException e) {

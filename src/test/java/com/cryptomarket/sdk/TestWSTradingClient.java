@@ -100,7 +100,7 @@ public class TestWSTradingClient {
 
   @Test
   public void testSpotTradingBalance() {
-    wsClient.getSpotTradingBalance("EOSETH", new Callback<Balance>() {
+    wsClient.getSpotTradingBalanceOfSymbol("EOSETH", new Callback<Balance>() {
       @Override
       public void resolve(Balance result) {
         Checker.checkBalance.accept(result);
@@ -144,7 +144,7 @@ public class TestWSTradingClient {
       fail();
     }
     // check
-    wsClient.getActiveOrders(
+    wsClient.getAllActiveOrders(
         new Callback<List<Report>>() {
           @Override
           public void resolve(List<Report> result) {
@@ -170,7 +170,7 @@ public class TestWSTradingClient {
     }
 
     // replace
-    wsClient.replaceOrder(
+    wsClient.replaceSpotOrder(
         oldClientOrderID,
         newClientOrderID,
         "0.02",
@@ -197,7 +197,7 @@ public class TestWSTradingClient {
     }
 
     // cancel
-    wsClient.cancelOrder(
+    wsClient.cancelSpotOrder(
         newClientOrderID,
         new Callback<Report>() {
           @Override
@@ -253,7 +253,7 @@ public class TestWSTradingClient {
     } catch (InterruptedException e) {
       fail();
     }
-    wsClient.getActiveOrders(callback);
+    wsClient.getAllActiveOrders(callback);
     try {
       TimeUnit.SECONDS.sleep(3);
     } catch (InterruptedException e) {
@@ -284,7 +284,7 @@ public class TestWSTradingClient {
 
   @Test
   public void testGetSpotTradingCommission() {
-    wsClient.getSpotCommission("EOSETH", new Callback<Commission>() {
+    wsClient.getSpotCommissionOfSymbol("EOSETH", new Callback<Commission>() {
       @Override
       public void resolve(Commission result) {
         Checker.checkCommission.accept(result);

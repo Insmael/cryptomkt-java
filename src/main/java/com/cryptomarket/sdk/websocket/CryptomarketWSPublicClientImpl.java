@@ -12,7 +12,6 @@ import com.cryptomarket.params.Period;
 import com.cryptomarket.sdk.Adapter;
 import com.cryptomarket.sdk.Callback;
 import com.cryptomarket.sdk.exceptions.CryptomarketSDKException;
-import com.cryptomarket.sdk.models.Candle;
 import com.cryptomarket.sdk.models.WSCandle;
 import com.cryptomarket.sdk.models.WSJsonResponse;
 import com.cryptomarket.sdk.models.WSOrderBook;
@@ -26,27 +25,8 @@ public class CryptomarketWSPublicClientImpl extends ClientBase implements Crypto
   OrderbookCache OBCache = new OrderbookCache();
   protected Adapter adapter = new Adapter();
 
-  static class CandleListInData {
-    List<Candle> data;
-  }
-
-  static class UpdateData {
-    Map<String, List<WSPublicTrade>> update;
-  }
-
-  static class SnapshotData {
-    Map<String, List<WSPublicTrade>> snapshot;
-  }
-
-  static class DataData {
-    Map<String, List<WSPublicTrade>> data;
-  }
-
   public CryptomarketWSPublicClientImpl() throws IOException {
     super("wss://api.exchange.cryptomkt.com/api/3/ws/public");
-    Map<String, String> subsKeys = this.getSubscritpionKeys();
-    //
-    subsKeys.put("trades", "trades");
   }
 
   @Override
@@ -93,9 +73,12 @@ public class CryptomarketWSPublicClientImpl extends ClientBase implements Crypto
 
   // PUBLIC METHODS
   @Override
-  public void subscribeToTrades(List<String> symbols, Callback<Map<String, List<WSPublicTrade>>> callback,
+  public void subscribeToTrades(
+      Callback<Map<String, List<WSPublicTrade>>> callback,
+      List<String> symbols,
+      Integer limit,
       Callback<List<String>> resultCallback) {
-    ParamsBuilder params = new ParamsBuilder().symbolList(symbols);
+    ParamsBuilder params = new ParamsBuilder().symbolList(symbols).limit(limit);
     Interceptor interceptor = InterceptorFactory.newMapStringListOfChanneledWSResponseObject(callback,
         WSPublicTrade.class);
     Interceptor resultInterceptor = (resultCallback == null)
@@ -105,8 +88,12 @@ public class CryptomarketWSPublicClientImpl extends ClientBase implements Crypto
   }
 
   @Override
-  public void subscribeToCandles(List<String> symbols, Period period, Integer limit,
-      Callback<Map<String, List<WSCandle>>> callback, Callback<List<String>> resultCallback) {
+  public void subscribeToCandles(
+      Callback<Map<String, List<WSCandle>>> callback,
+      Period period,
+      List<String> symbols,
+      Integer limit,
+      Callback<List<String>> resultCallback) {
     ParamsBuilder params = new ParamsBuilder().symbolList(symbols);
     Interceptor interceptor = InterceptorFactory.newMapStringListOfChanneledWSResponseObject(callback, WSCandle.class);
     Interceptor resultInterceptor = (resultCallback == null)
@@ -116,7 +103,10 @@ public class CryptomarketWSPublicClientImpl extends ClientBase implements Crypto
   }
 
   @Override
-  public void subscribeToMiniTicker(List<String> symbols, TickerSpeed speed, Callback<Map<String, WSCandle>> callback,
+  public void subscribeToMiniTicker(
+      Callback<Map<String, WSCandle>> callback,
+      TickerSpeed speed,
+      List<String> symbols,
       Callback<List<String>> resultCallback) {
     ParamsBuilder params = new ParamsBuilder().symbolList(symbols);
     Interceptor interceptor = InterceptorFactory.newOfChanneledWSResponse(callback, WSCandle.class);
@@ -128,8 +118,10 @@ public class CryptomarketWSPublicClientImpl extends ClientBase implements Crypto
   }
 
   @Override
-  public void subscribeToMiniTickerInBatches(List<String> symbols, TickerSpeed speed,
+  public void subscribeToMiniTickerInBatches(
       Callback<Map<String, WSCandle>> callback,
+      TickerSpeed speed,
+      List<String> symbols,
       Callback<List<String>> resultCallback) {
     ParamsBuilder params = new ParamsBuilder().symbolList(symbols);
     Interceptor interceptor = InterceptorFactory.newOfChanneledWSResponse(callback, WSCandle.class);
@@ -141,7 +133,10 @@ public class CryptomarketWSPublicClientImpl extends ClientBase implements Crypto
   }
 
   @Override
-  public void subscribeToTicker(List<String> symbols, TickerSpeed speed, Callback<Map<String, WSTicker>> callback,
+  public void subscribeToTicker(
+      Callback<Map<String, WSTicker>> callback,
+      TickerSpeed speed,
+      List<String> symbols,
       Callback<List<String>> resultCallback) {
     ParamsBuilder params = new ParamsBuilder().symbolList(symbols);
     Interceptor interceptor = InterceptorFactory.newOfChanneledWSResponse(callback, WSTicker.class);
@@ -153,8 +148,10 @@ public class CryptomarketWSPublicClientImpl extends ClientBase implements Crypto
   }
 
   @Override
-  public void subscribeToTickerInBatches(List<String> symbols, TickerSpeed speed,
+  public void subscribeToTickerInBatches(
       Callback<Map<String, WSTicker>> callback,
+      TickerSpeed speed,
+      List<String> symbols,
       Callback<List<String>> resultCallback) {
     ParamsBuilder params = new ParamsBuilder().symbolList(symbols);
     Interceptor interceptor = InterceptorFactory.newOfChanneledWSResponse(callback, WSTicker.class);
@@ -166,7 +163,9 @@ public class CryptomarketWSPublicClientImpl extends ClientBase implements Crypto
   }
 
   @Override
-  public void subscribeToFullOrderBook(List<String> symbols, Callback<Map<String, WSOrderBook>> callback,
+  public void subscribeToFullOrderBook(
+      Callback<Map<String, WSOrderBook>> callback,
+      List<String> symbols,
       Callback<List<String>> resultCallback) {
     ParamsBuilder params = new ParamsBuilder().symbolList(symbols);
     Interceptor interceptor = InterceptorFactory.newOfChanneledWSResponse(callback, WSOrderBook.class);
@@ -178,8 +177,12 @@ public class CryptomarketWSPublicClientImpl extends ClientBase implements Crypto
   }
 
   @Override
-  public void subscribeToPartialOrderBook(List<String> symbols, Depth depth, OBSpeed speed,
-      Callback<Map<String, WSOrderBook>> callback, Callback<List<String>> resultCallback) {
+  public void subscribeToPartialOrderBook(
+      Callback<Map<String, WSOrderBook>> callback,
+      Depth depth,
+      OBSpeed speed,
+      List<String> symbols,
+      Callback<List<String>> resultCallback) {
     ParamsBuilder params = new ParamsBuilder().symbolList(symbols);
     Interceptor interceptor = InterceptorFactory.newOfChanneledWSResponse(callback, WSOrderBook.class);
     Interceptor resultInterceptor = (resultCallback == null)
@@ -190,8 +193,12 @@ public class CryptomarketWSPublicClientImpl extends ClientBase implements Crypto
   }
 
   @Override
-  public void subscribeToPartialOrderBookInBatches(List<String> symbols, Depth depth, OBSpeed speed,
-      Callback<Map<String, WSOrderBook>> callback, Callback<List<String>> resultCallback) {
+  public void subscribeToPartialOrderBookInBatches(
+      Callback<Map<String, WSOrderBook>> callback,
+      Depth depth,
+      OBSpeed speed,
+      List<String> symbols,
+      Callback<List<String>> resultCallback) {
     ParamsBuilder params = new ParamsBuilder().symbolList(symbols);
     Interceptor interceptor = InterceptorFactory.newOfChanneledWSResponse(callback, WSOrderBook.class);
     Interceptor resultInterceptor = (resultCallback == null)
@@ -202,8 +209,10 @@ public class CryptomarketWSPublicClientImpl extends ClientBase implements Crypto
   }
 
   @Override
-  public void subscribeToTopOfOrderBook(List<String> symbols, OBSpeed speed,
+  public void subscribeToTopOfOrderBook(
       Callback<Map<String, WSOrderBookTop>> callback,
+      OBSpeed speed,
+      List<String> symbols,
       Callback<List<String>> resultCallback) {
     ParamsBuilder params = new ParamsBuilder().symbolList(symbols);
     Interceptor interceptor = InterceptorFactory.newOfChanneledWSResponse(callback, WSOrderBookTop.class);
@@ -215,8 +224,10 @@ public class CryptomarketWSPublicClientImpl extends ClientBase implements Crypto
   }
 
   @Override
-  public void subscribeToTopOfOrderBookInBatches(List<String> symbols, OBSpeed speed,
+  public void subscribeToTopOfOrderBookInBatches(
       Callback<Map<String, WSOrderBookTop>> callback,
+      OBSpeed speed,
+      List<String> symbols,
       Callback<List<String>> resultCallback) {
     ParamsBuilder params = new ParamsBuilder().symbolList(symbols);
     Interceptor interceptor = InterceptorFactory.newOfChanneledWSResponse(callback, WSOrderBookTop.class);

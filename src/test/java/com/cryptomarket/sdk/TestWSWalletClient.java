@@ -57,7 +57,7 @@ public class TestWSWalletClient {
 
   @Test
   public void testGetWalletBalance() {
-    wsClient.getWalletBalance(
+    wsClient.getWalletBalanceOfCurrency(
         "EOS",
         new Callback<Balance>() {
           @Override

@@ -77,7 +77,7 @@ public class CryptomarketWSTradingClientImpl extends AuthClient implements Crypt
   }
 
   @Override
-  public void getActiveOrders(Callback<List<Report>> callback) {
+  public void getAllActiveOrders(Callback<List<Report>> callback) {
     Interceptor interceptor = InterceptorFactory.newOfWSResponseList(callback, Report.class);
     sendById("spot_get_orders", null, interceptor);
 
@@ -127,7 +127,10 @@ public class CryptomarketWSTradingClientImpl extends AuthClient implements Crypt
   }
 
   @Override
-  public void createSpotOrderList(String orderListID, ContingencyType contingencyType, List<Order> orders,
+  public void createSpotOrderList(
+      ContingencyType contingencyType,
+      List<Order> orders,
+      String orderListID,
       Callback<List<Report>> callback) {
     ParamsBuilder params = new ParamsBuilder()
         .orderListID(orderListID)
@@ -141,7 +144,7 @@ public class CryptomarketWSTradingClientImpl extends AuthClient implements Crypt
   }
 
   @Override
-  public void cancelOrder(String clientOrderID, Callback<Report> callback) {
+  public void cancelSpotOrder(String clientOrderID, Callback<Report> callback) {
     ParamsBuilder params = new ParamsBuilder().clientOrderID(clientOrderID);
     Interceptor interceptor = (callback == null)
         ? null
@@ -150,7 +153,7 @@ public class CryptomarketWSTradingClientImpl extends AuthClient implements Crypt
   }
 
   @Override
-  public void replaceOrder(String clientOrderID, String newClientOrderID, String quantity, String price,
+  public void replaceSpotOrder(String clientOrderID, String newClientOrderID, String quantity, String price,
       Boolean strictValidate, Callback<Report> callback) {
     ParamsBuilder paramsBuilder = new ParamsBuilder()
         .clientOrderID(clientOrderID)
@@ -181,7 +184,7 @@ public class CryptomarketWSTradingClientImpl extends AuthClient implements Crypt
   }
 
   @Override
-  public void getSpotTradingBalance(String symbol, Callback<Balance> callback) {
+  public void getSpotTradingBalanceOfSymbol(String symbol, Callback<Balance> callback) {
     Interceptor interceptor = (callback == null)
         ? null
         : InterceptorFactory.newOfWSResponseObject(callback, Balance.class);
@@ -197,7 +200,7 @@ public class CryptomarketWSTradingClientImpl extends AuthClient implements Crypt
   }
 
   @Override
-  public void getSpotCommission(String symbol, Callback<Commission> callback) {
+  public void getSpotCommissionOfSymbol(String symbol, Callback<Commission> callback) {
     ParamsBuilder paramsBuilder = new ParamsBuilder().symbol(symbol);
     Interceptor interceptor = (callback == null)
         ? null

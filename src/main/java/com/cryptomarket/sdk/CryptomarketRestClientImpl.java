@@ -473,7 +473,7 @@ public class CryptomarketRestClientImpl implements CryptomarketRestClient {
   }
 
   @Override
-  public List<Commission> getAllTradingCommission() throws CryptomarketSDKException {
+  public List<Commission> getAllTradingCommissions() throws CryptomarketSDKException {
     String jsonResponse = httpClient.get("spot/fee", null);
     return adapter.listFromJson(jsonResponse, Commission.class);
   }

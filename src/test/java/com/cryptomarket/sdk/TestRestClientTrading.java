@@ -99,7 +99,7 @@ public class TestRestClientTrading {
     @Test
     public void testGetAllTradingCommission() {
         try {
-            List<Commission> commissions = client.getAllTradingCommission();
+            List<Commission> commissions = client.getAllTradingCommissions();
             commissions.forEach(Checker.checkCommission);
         } catch (CryptomarketSDKException e) {
             fail(e.toString());

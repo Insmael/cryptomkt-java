@@ -35,7 +35,6 @@ public class TestWSClientLifeTime {
         public void onConnect() {
           System.out.println("connected");
           this.subscribeToFullOrderBook(
-              Arrays.asList("EOSETH"),
               new Callback<Map<String, WSOrderBook>>() {
                 public void resolve(Map<String, WSOrderBook> result) {
                   System.out.println("subscription feed");
@@ -46,6 +45,7 @@ public class TestWSClientLifeTime {
                   System.out.println("error in subscription feed");
                 }
               },
+              Arrays.asList("EOSETH"),
               new Callback<List<String>>() {
                 @Override
                 public void resolve(List<String> result) {
@@ -104,19 +104,22 @@ public class TestWSClientLifeTime {
           this.close();
         }
 
-  @Override
-  public void onFailure(Throwable t) {
-    t.printStackTrace();
-  }};wsClient.connect();try{TimeUnit.SECONDS.sleep(8);}catch(
+        @Override
+        public void onFailure(Throwable t) {
+          t.printStackTrace();
+        }
+      };
+      wsClient.connect();
+      try {
+        TimeUnit.SECONDS.sleep(8);
+      } catch (
 
-  InterruptedException e)
-  {
-    fail();
-  }}catch(
-  Exception e)
-  {
-    e.printStackTrace();
-  }
+      InterruptedException e) {
+        fail();
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   @Test
