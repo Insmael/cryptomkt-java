@@ -9,7 +9,6 @@ import com.cryptomarket.sdk.exceptions.CryptomarketSDKException;
 import com.cryptomarket.sdk.models.Balance;
 import com.cryptomarket.sdk.models.Commission;
 import com.cryptomarket.sdk.models.Order;
-import com.cryptomarket.sdk.models.Symbol;
 import com.cryptomarket.params.ContingencyType;
 import com.cryptomarket.params.OrderBuilder;
 import com.cryptomarket.params.OrderType;

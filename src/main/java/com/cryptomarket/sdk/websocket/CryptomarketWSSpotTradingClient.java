@@ -11,7 +11,6 @@ import com.cryptomarket.params.TimeInForce;
 import com.cryptomarket.sdk.Callback;
 import com.cryptomarket.sdk.models.Balance;
 import com.cryptomarket.sdk.models.Commission;
-import com.cryptomarket.sdk.models.Order;
 import com.cryptomarket.sdk.models.Report;
 
 import org.jetbrains.annotations.Nullable;

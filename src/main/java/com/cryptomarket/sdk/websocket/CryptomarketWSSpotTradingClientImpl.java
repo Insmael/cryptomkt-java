@@ -2,7 +2,6 @@ package com.cryptomarket.sdk.websocket;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -18,7 +17,6 @@ import com.cryptomarket.sdk.exceptions.CryptomarketSDKException;
 import com.cryptomarket.sdk.models.Balance;
 import com.cryptomarket.sdk.models.Commission;
 import com.cryptomarket.sdk.models.ErrorBody;
-import com.cryptomarket.sdk.models.Order;
 import com.cryptomarket.sdk.models.Report;
 import com.cryptomarket.sdk.models.WSJsonResponse;
 import com.cryptomarket.sdk.websocket.interceptor.Interceptor;

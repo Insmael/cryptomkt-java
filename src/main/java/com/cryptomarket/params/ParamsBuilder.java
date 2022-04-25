@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.cryptomarket.sdk.exceptions.CryptomarketArgumentException;
-import com.cryptomarket.sdk.models.Order;
 
 import org.jetbrains.annotations.Nullable;
 
