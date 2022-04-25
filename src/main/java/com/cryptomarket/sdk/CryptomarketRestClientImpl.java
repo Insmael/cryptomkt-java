@@ -1,11 +1,13 @@
 package com.cryptomarket.sdk;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 import com.cryptomarket.params.AccountType;
 import com.cryptomarket.params.ArgNames;
+import com.cryptomarket.params.ContingencyType;
 import com.cryptomarket.params.SortBy;
 import com.cryptomarket.params.OrderType;
 import com.cryptomarket.params.ParamsBuilder;
@@ -17,6 +19,7 @@ import com.cryptomarket.params.TransactionStatus;
 import com.cryptomarket.params.TransactionSubtype;
 import com.cryptomarket.params.TransactionType;
 import com.cryptomarket.params.IdentifyBy;
+import com.cryptomarket.params.OrderBuilder;
 import com.cryptomarket.params.UseOffchain;
 import com.cryptomarket.sdk.exceptions.CryptomarketSDKException;
 import com.cryptomarket.sdk.models.Address;
@@ -423,6 +426,35 @@ public class CryptomarketRestClientImpl implements CryptomarketRestClient {
         paramsBuilder.build());
     return adapter.objectFromJson(jsonResponse, Order.class);
 
+  }
+
+  @Override
+  public Order createSpotOrder(OrderBuilder orderBuilder)
+      throws CryptomarketSDKException {
+    orderBuilder.checkRequired(Arrays.asList(
+        ArgNames.SYMBOL,
+        ArgNames.SIDE,
+        ArgNames.QUANTITY));
+    String jsonResponse = httpClient.post(
+        "spot/order",
+        orderBuilder.build());
+    return adapter.objectFromJson(jsonResponse, Order.class);
+  }
+
+  @Override
+  public List<Order> createSpotOrderList(
+      ContingencyType contingencyType,
+      List<OrderBuilder> orders,
+      String orderListID)
+      throws CryptomarketSDKException {
+    List<Map<String, Object>> orderListData = new ArrayList<>();
+    orders.forEach(orderBuilder -> orderListData.add(orderBuilder.buildObjectMap()));
+    ParamsBuilder paramsBuilder = new ParamsBuilder()
+        .contingencyType(contingencyType)
+        .orderListID(orderListID)
+        .orders(orderListData);
+    String jsonResponse = httpClient.post("spot/order/list", paramsBuilder.build());
+    return adapter.listFromJson(jsonResponse, Order.class);
   }
 
   @Override

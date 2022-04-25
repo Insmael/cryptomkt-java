@@ -322,8 +322,8 @@ public class ParamsBuilder {
     return this;
   }
 
-  public ParamsBuilder orders(List<Order> orders) {
-    // TODO implement
+  public ParamsBuilder orders(List<Map<String, Object>> orderListData) {
+    this.params.put(ArgNames.ORDERS, orderListData);
     return this;
   }
 

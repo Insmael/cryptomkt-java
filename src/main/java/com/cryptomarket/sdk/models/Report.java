@@ -1,5 +1,8 @@
 package com.cryptomarket.sdk.models;
 
+import com.cryptomarket.params.OrderStatus;
+import com.cryptomarket.params.OrderType;
+import com.cryptomarket.params.ReportType;
 import com.cryptomarket.params.Side;
 import com.squareup.moshi.Json;
 

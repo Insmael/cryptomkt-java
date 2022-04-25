@@ -1,4 +1,4 @@
-package com.cryptomarket.sdk.models;
+package com.cryptomarket.params;
 
 public enum ReportType {
   STATUS("status"),

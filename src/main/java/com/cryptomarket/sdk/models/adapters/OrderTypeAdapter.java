@@ -1,7 +1,7 @@
 package com.cryptomarket.sdk.models.adapters;
 
+import com.cryptomarket.params.OrderType;
 import com.cryptomarket.sdk.Utils;
-import com.cryptomarket.sdk.models.OrderType;
 import com.squareup.moshi.FromJson;
 
 public class OrderTypeAdapter {

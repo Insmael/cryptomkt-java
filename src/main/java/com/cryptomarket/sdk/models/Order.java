@@ -2,6 +2,9 @@ package com.cryptomarket.sdk.models;
 
 import java.util.List;
 
+import com.cryptomarket.params.ContingencyType;
+import com.cryptomarket.params.OrderStatus;
+import com.cryptomarket.params.OrderType;
 import com.squareup.moshi.Json;
 
 public class Order {
@@ -9,6 +12,10 @@ public class Order {
   private String ID;
   @Json(name = "client_order_id")
   private String clientOrderID;
+  @Json(name="order_list_id")
+  private String orderListID;
+  @Json(name="contingency_type")
+  private ContingencyType contingencyType;
   private String symbol;
   private String side;
   private OrderStatus status;
@@ -169,12 +176,31 @@ public class Order {
     this.originalClientOrderID = originalClientOrderID;
   }
 
+
+  public String getOrderListID() {
+    return orderListID;
+  }
+
+  public void setOrderListID(String orderListID) {
+    this.orderListID = orderListID;
+  }
+
+  public ContingencyType getContingencyType() {
+    return contingencyType;
+  }
+
+  public void setContingencyType(ContingencyType contingencyType) {
+    this.contingencyType = contingencyType;
+  }
+
   @Override
   public String toString() {
-    return "Order [ID=" + ID + ", clientOrderID=" + clientOrderID + ", createdAt=" + createdAt + ", expireTime="
-        + expireTime + ", originalClientOrderID=" + originalClientOrderID + ", postOnly=" + postOnly + ", price="
-        + price + ", quantity=" + quantity + ", quantityCumulative=" + quantityCumulative + ", side=" + side
-        + ", status=" + status + ", stopPrice=" + stopPrice + ", symbol=" + symbol + ", timeInForce=" + timeInForce
-        + ", trades=" + trades + ", type=" + type + ", updatedAt=" + updatedAt + "]";
+    return "Order [ID=" + ID + ", clientOrderID=" + clientOrderID + ", contingencyType=" + contingencyType
+        + ", createdAt=" + createdAt + ", expireTime=" + expireTime + ", orderListID=" + orderListID
+        + ", originalClientOrderID=" + originalClientOrderID + ", postOnly=" + postOnly + ", price=" + price
+        + ", quantity=" + quantity + ", quantityCumulative=" + quantityCumulative + ", side=" + side + ", status="
+        + status + ", stopPrice=" + stopPrice + ", symbol=" + symbol + ", timeInForce=" + timeInForce + ", trades="
+        + trades + ", type=" + type + ", updatedAt=" + updatedAt + "]";
   }
+
 }

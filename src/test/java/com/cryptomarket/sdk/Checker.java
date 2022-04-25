@@ -263,7 +263,6 @@ public class Checker {
         obj.getCreatedAt(),
         obj.getUpdatedAt(),
         obj.getReportType().toString()));
-    System.out.print(obj);
     fields.forEach(checkString);
   };
 }

@@ -1,10 +1,13 @@
 package com.cryptomarket.sdk.websocket;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 import com.cryptomarket.params.ContingencyType;
+import com.cryptomarket.params.OrderBuilder;
 import com.cryptomarket.params.OrderType;
 import com.cryptomarket.params.ParamsBuilder;
 import com.cryptomarket.params.Side;
@@ -132,17 +135,19 @@ public class CryptomarketWSSpotTradingClientImpl extends AuthClient implements C
   @Override
   public void createSpotOrderList(
       ContingencyType contingencyType,
-      List<Order> orders,
+      List<OrderBuilder> orders,
       String orderListID,
       Callback<List<Report>> callback) {
+    List<Map<String, Object>> orderListData = new ArrayList<>();
+    orders.forEach(orderBuilder -> orderListData.add(orderBuilder.buildObjectMap()));
     ParamsBuilder params = new ParamsBuilder()
         .orderListID(orderListID)
         .contingencyType(contingencyType)
-        .orders(orders);
+        .orders(orderListData);
     Interceptor interceptor = (callback == null)
         ? null
         : InterceptorFactory.newOfWSResponseList(callback, Report.class);
-    sendById("cancel_spot_order", params.buildObjectMap(), interceptor);
+    sendById("spot_new_order_list", params.buildObjectMap(), interceptor);
 
   }
 

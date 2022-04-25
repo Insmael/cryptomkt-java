@@ -2,14 +2,17 @@ package com.cryptomarket.sdk;
 
 import static org.junit.Assert.fail;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.cryptomarket.params.ContingencyType;
+import com.cryptomarket.params.OrderBuilder;
+import com.cryptomarket.params.OrderStatus;
 import com.cryptomarket.params.ParamsBuilder;
 import com.cryptomarket.params.Side;
 import com.cryptomarket.sdk.models.Balance;
 import com.cryptomarket.sdk.models.Commission;
-import com.cryptomarket.sdk.models.OrderStatus;
 import com.cryptomarket.sdk.models.Report;
 import com.cryptomarket.sdk.websocket.CryptomarketWSSpotTradingClient;
 import com.cryptomarket.sdk.websocket.CryptomarketWSSpotTradingClientImpl;
@@ -49,6 +52,7 @@ public class TestWSSpotTradingClient {
         new Callback<List<Balance>>() {
           @Override
           public void resolve(List<Balance> result) {
+            System.out.println(result);
             result.forEach(Checker.checkBalance);
           }
 
@@ -265,6 +269,44 @@ public class TestWSSpotTradingClient {
 
   @Test
   public void testCreateOrderList() {
-    // TODO
+    String orderListID = String.format("%d", System.currentTimeMillis());
+    String secondClientOrderID = String.format("%d", System.currentTimeMillis()) + "2";
+    String symbol = "EOSETH";
+    Side side = Side.SELL;
+    String quantity = "0.01";
+    String price = "10000";
+    wsClient.createSpotOrderList(
+        ContingencyType.ALL_OR_NONE,
+        Arrays.asList(
+            new OrderBuilder()
+                .clientOrderID(orderListID)
+                .symbol(symbol)
+                .side(side)
+                .quantity(quantity)
+                .price(price),
+            new OrderBuilder()
+                .clientOrderID(secondClientOrderID)
+                .symbol(symbol)
+                .side(side)
+                .quantity(quantity)
+                .price(price)),
+        orderListID,
+        new Callback<List<Report>>() {
+          @Override
+          public void resolve(List<Report> result) {
+            System.out.println(result);
+            result.forEach(Checker.checkReport);
+          }
+
+          @Override
+          public void reject(Throwable exception) {
+            System.out.println(exception);
+          }
+        });
+    try {
+      TimeUnit.SECONDS.sleep(5);
+    } catch (InterruptedException e) {
+      fail();
+    }
   }
 }
