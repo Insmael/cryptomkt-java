@@ -17,15 +17,15 @@ import com.cryptomarket.sdk.models.WSOrderBook;
 import com.cryptomarket.sdk.models.WSOrderBookTop;
 import com.cryptomarket.sdk.models.WSPublicTrade;
 import com.cryptomarket.sdk.models.WSTicker;
-import com.cryptomarket.sdk.websocket.CryptomarketWSPublicClient;
-import com.cryptomarket.sdk.websocket.CryptomarketWSPublicClientImpl;
+import com.cryptomarket.sdk.websocket.CryptomarketWSMarketDataClient;
+import com.cryptomarket.sdk.websocket.CryptomarketWSMarketDataClientImpl;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class TestWSPublicClientSubs {
-  CryptomarketWSPublicClient wsClient;
+public class TestWSMarketDataClientSubs {
+  CryptomarketWSMarketDataClient wsClient;
   Boolean authenticated = false;
   Callback<Boolean> resultCallback = new Callback<Boolean>() {
     @Override
@@ -42,7 +42,7 @@ public class TestWSPublicClientSubs {
   @Before
   public void before() {
     try {
-      wsClient = new CryptomarketWSPublicClientImpl();
+      wsClient = new CryptomarketWSMarketDataClientImpl();
       wsClient.connect();
       try {
         TimeUnit.SECONDS.sleep(3);

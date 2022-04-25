@@ -21,11 +21,11 @@ import com.cryptomarket.sdk.models.WSTicker;
 import com.cryptomarket.sdk.websocket.interceptor.Interceptor;
 import com.cryptomarket.sdk.websocket.interceptor.InterceptorFactory;
 
-public class CryptomarketWSPublicClientImpl extends ClientBase implements CryptomarketWSPublicClient {
+public class CryptomarketWSMarketDataClientImpl extends ClientBase implements CryptomarketWSMarketDataClient {
   OrderbookCache OBCache = new OrderbookCache();
   protected Adapter adapter = new Adapter();
 
-  public CryptomarketWSPublicClientImpl() throws IOException {
+  public CryptomarketWSMarketDataClientImpl() throws IOException {
     super("wss://api.exchange.cryptomkt.com/api/3/ws/public");
   }
 

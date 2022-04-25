@@ -22,9 +22,9 @@ import com.cryptomarket.sdk.websocket.interceptor.Interceptor;
 import com.cryptomarket.sdk.websocket.interceptor.InterceptorFactory;
 import com.squareup.moshi.JsonDataException;
 
-public class CryptomarketWSTradingClientImpl extends AuthClient implements CryptomarketWSTradingClient {
+public class CryptomarketWSSpotTradingClientImpl extends AuthClient implements CryptomarketWSSpotTradingClient {
 
-  public CryptomarketWSTradingClientImpl(String apiKey, String apiSecret) throws IOException {
+  public CryptomarketWSSpotTradingClientImpl(String apiKey, String apiSecret, Integer window) throws IOException {
     super("wss://api.exchange.cryptomkt.com/api/3/ws/trading", apiKey, apiSecret);
     Map<String, String> subsKeys = this.getSubscritpionKeys();
     // reports
@@ -32,6 +32,10 @@ public class CryptomarketWSTradingClientImpl extends AuthClient implements Crypt
     subsKeys.put("spot_unsubscribe", "reports");
     subsKeys.put("spot_orders", "reports");
     subsKeys.put("spot_order", "reports");
+  }
+
+  public CryptomarketWSSpotTradingClientImpl(String apiKey, String apiSecret) throws IOException {
+    this(apiKey, apiSecret, 0);
   }
 
   @Override
@@ -69,7 +73,6 @@ public class CryptomarketWSTradingClientImpl extends AuthClient implements Crypt
 
   @Override
   public void unsubscribeToReports(Callback<Boolean> callback) {
-    // TODO test the result type (suposedly boolean), as is not said in the docs
     Interceptor interceptor = (callback == null)
         ? null
         : InterceptorFactory.newOfWSResponseObject(callback, Boolean.class);

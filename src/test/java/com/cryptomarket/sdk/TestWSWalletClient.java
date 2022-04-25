@@ -1,6 +1,5 @@
 package com.cryptomarket.sdk;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.List;
@@ -74,12 +73,12 @@ public class TestWSWalletClient {
 
   @Test
   public void testGetTransactions() {
-    wsClient.getTransactions(null, new Callback<List<Transaction>>() {
+    wsClient.getTransactions(new Callback<List<Transaction>>() {
       @Override
       public void resolve(List<Transaction> result) {
         result.forEach(Checker.checkTransaction);
       }
-    });
+    }, null);
     try {
       TimeUnit.SECONDS.sleep(3);
     } catch (InterruptedException e) {

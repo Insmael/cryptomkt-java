@@ -3,7 +3,7 @@ package com.cryptomarket.params;
 public enum SortBy {
     TIMESTAMP("timestamp"),
     ID("id"),
-    DATE("created_at");
+    DATETIME("created_at");
 
     private final String label;
 

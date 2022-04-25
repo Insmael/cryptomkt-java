@@ -113,7 +113,6 @@ public class ParamsBuilder {
     return this.addArg(ArgNames.TILL, arg);
   }
 
-  // TODO leave only one limit. string or integer, not both.
   public ParamsBuilder limit(@Nullable Integer arg) {
     return this.addArg(ArgNames.LIMIT, arg);
   }

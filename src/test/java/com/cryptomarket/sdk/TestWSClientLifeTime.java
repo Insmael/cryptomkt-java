@@ -8,14 +8,13 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.cryptomarket.sdk.models.Balance;
-import com.cryptomarket.sdk.models.Currency;
 import com.cryptomarket.sdk.models.WSOrderBook;
 import com.cryptomarket.sdk.websocket.CryptomarketWSWalletClient;
 import com.cryptomarket.sdk.websocket.CryptomarketWSWalletClientImpl;
-import com.cryptomarket.sdk.websocket.CryptomarketWSPublicClient;
-import com.cryptomarket.sdk.websocket.CryptomarketWSPublicClientImpl;
-import com.cryptomarket.sdk.websocket.CryptomarketWSTradingClient;
-import com.cryptomarket.sdk.websocket.CryptomarketWSTradingClientImpl;
+import com.cryptomarket.sdk.websocket.CryptomarketWSMarketDataClient;
+import com.cryptomarket.sdk.websocket.CryptomarketWSMarketDataClientImpl;
+import com.cryptomarket.sdk.websocket.CryptomarketWSSpotTradingClient;
+import com.cryptomarket.sdk.websocket.CryptomarketWSSpotTradingClientImpl;
 
 import org.junit.Test;
 
@@ -24,8 +23,8 @@ public class TestWSClientLifeTime {
   @Test
   public void testPublicClientLifetime() {
     try {
-      CryptomarketWSPublicClient wsClient;
-      wsClient = new CryptomarketWSPublicClientImpl() {
+      CryptomarketWSMarketDataClient wsClient;
+      wsClient = new CryptomarketWSMarketDataClientImpl() {
         @Override
         public void onClose(String reason) {
           System.out.println("closing");
@@ -85,8 +84,8 @@ public class TestWSClientLifeTime {
   @Test
   public void testTradingClientLifetime() {
     try {
-      CryptomarketWSTradingClient wsClient;
-      wsClient = new CryptomarketWSTradingClientImpl(KeyLoader.getApiKey(), KeyLoader.getApiSecret()) {
+      CryptomarketWSSpotTradingClient wsClient;
+      wsClient = new CryptomarketWSSpotTradingClientImpl(KeyLoader.getApiKey(), KeyLoader.getApiSecret()) {
         @Override
         public void onClose(String reason) {
           System.out.println("closing");

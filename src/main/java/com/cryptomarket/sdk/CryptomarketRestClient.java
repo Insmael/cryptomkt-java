@@ -4,9 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.cryptomarket.params.AccountType;
-import com.cryptomarket.params.AirdropStatus;
 import com.cryptomarket.params.SortBy;
-import com.cryptomarket.params.Margin;
 import com.cryptomarket.params.OrderType;
 import com.cryptomarket.params.ParamsBuilder;
 import com.cryptomarket.params.Period;
@@ -20,7 +18,6 @@ import com.cryptomarket.params.IdentifyBy;
 import com.cryptomarket.params.UseOffchain;
 import com.cryptomarket.sdk.exceptions.CryptomarketSDKException;
 import com.cryptomarket.sdk.models.Address;
-import com.cryptomarket.sdk.models.Airdrop;
 import com.cryptomarket.sdk.models.AmountLock;
 import com.cryptomarket.sdk.models.Balance;
 import com.cryptomarket.sdk.models.Candle;
@@ -675,8 +672,7 @@ public interface CryptomarketRestClient {
       @Nullable String from,
       @Nullable String till,
       @Nullable Integer limit,
-      @Nullable Integer offset,
-      @Nullable Margin margin)
+      @Nullable Integer offset)
       throws CryptomarketSDKException;
 
   public List<Trade> getSpotTradesHistory(ParamsBuilder paramsBuilder)
@@ -1083,48 +1079,6 @@ public interface CryptomarketRestClient {
 
   public Boolean checkIfOffchainIsAvailable(ParamsBuilder paramsBuilder)
       throws CryptomarketSDKException;
-
-  /**
-   * Get the list of airdrops
-   * <p>
-   * Requires the "Payment information" API key Access Right
-   * <p>
-   * https://api.exchange.cryptomkt.com/#airdrops
-   *
-   * @param currency      Optional. Code of the dropped currency
-   * @param baseCurrency  Optional. The code of base currency (the currency used
-   *                      for dropped currency amount calculation)
-   * @param activeAt      Optional. Default is value is active at current time
-   * @param statuses      Optional. A list of desired airdrop statuses. Accepted
-   *                      values are: 'available' (ready for claim), 'claimed'
-   *                      (requested already), 'pending' (payment in progress) and
-   *                      'commited' (payment finished)
-   * @param transactionId Optional. Airdrop transaction identifier
-   * @return A list of airdrops
-   * @throws CryptomarketSDKException
-   */
-  public List<Airdrop> getAirdrops(
-      @Nullable String currency,
-      @Nullable String baseCurrency,
-      @Nullable String activeAt,
-      @Nullable List<AirdropStatus> statuses,
-      @Nullable String transactionID) throws CryptomarketSDKException;
-
-  public List<Airdrop> getAirdrops(ParamsBuilder paramsBuilder)
-      throws CryptomarketSDKException;
-
-  /**
-   * Claim an airdrop by its currency code
-   * <p>
-   * Requires the "Withdraw cryptocurrencies" API key Access Right
-   * <p>
-   * https://api.exchange.cryptomkt.com/#airdrops
-   *
-   * @param currency Code of the dropped currency
-   * @return
-   * @throws CryptomarketSDKException
-   */
-  public void claimAirdrop(String currency) throws CryptomarketSDKException;
 
   /**
    * Get the list of amount locks

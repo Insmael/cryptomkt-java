@@ -5,7 +5,6 @@ import static org.junit.Assert.fail;
 import java.util.List;
 
 import com.cryptomarket.params.AccountType;
-import com.cryptomarket.params.IdentifyBy;
 import com.cryptomarket.params.ParamsBuilder;
 import com.cryptomarket.sdk.exceptions.CryptomarketSDKException;
 import com.cryptomarket.sdk.models.Address;

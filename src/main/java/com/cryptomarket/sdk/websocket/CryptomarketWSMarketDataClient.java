@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>
  * Requires no API keys to make socket calls
  */
-public interface CryptomarketWSPublicClient extends CryptomarketWS {
+public interface CryptomarketWSMarketDataClient extends CryptomarketWS {
 
   /**
    * subscribe to a feed of trades

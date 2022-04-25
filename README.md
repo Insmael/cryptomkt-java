@@ -31,8 +31,8 @@ CryptomarketRestClient client = new CryptomarketRestClientImpl(api_key, api_secr
 Map<String, Currency> currencies = client.getCurrencies(null);
 
 // get some symbols
-List<String> symbolIds = new ArrayList<String>(Arrays.asList("eoseth","ethbtc"));
-Map<String, Symbol> symbols = client.getSymbols(symbolIds);
+List<String> symbolIDs = new ArrayList<String>(Arrays.asList("eoseth","ethbtc"));
+Map<String, Symbol> symbols = client.getSymbols(symbolIDs);
 
 // get an order book
 OrderBook  orderbook = client.getOrderbookOfSymbol("eoseth");
@@ -75,7 +75,79 @@ Map<String, List<Candle>> candles client.getCandles(new ParamsBuilder()
 ```
 
 ## websocket client
-*work in progress*
+There are three websocket clients, the market data client, the spot trading client and the wallet client.
+The market data client requires no authentication, while the spot trading client and the wallet client do require it.
+
+All websocket methods accept a callback class with two methods, one to handle the incoming data (resolve) and one to handle a
+possible incomming error (reject). The callback base class is:
+```java
+public abstract class Callback<T> {
+    abstract public void resolve(T result);
+    public void reject(Throwable exception) {};
+}
+```
+
+Example of use of the websocket client
+```java
+
+
+// instantiate a market data client
+CryptomarketWSMarketDataClient marketDataClient = CryptomarketWSMarketDataClientImpl();
+
+// make a partial orderbook subscription
+//    prepare args
+List<String> symbols = Arrays.asList("EOSETH");
+
+Callback<Map<String, WSOrderBook>> callback = new Callback<Map<String, WSOrderBook>>() {
+  @Override
+  public void resolve(Map<String, WSOrderBook> result) {
+    System.out.println(result);
+    result.forEach((symbol, orderbook) -> {
+      System.out.println("symbol:" + symbol);
+      System.out.println(orderbook);
+    });
+  }
+};
+//    make subscription
+marketDataClient.subscribeToPartialOrderBook(
+    callback,
+    Depth._5,
+    OBSpeed._500_MILISECONDS,
+    symbols,
+    null);
+
+
+// instantiate a spot trading websocket client
+String apiKey = "AB32B3201";
+String apiSecret= "21b12401";
+CryptomarketWSSpotTradingClient tradingClient = new CryptomarketWSSpotTradingClientImpl(apiKey, apiSecret);
+
+// get all the spot trading balances
+tradingClient.getSpotTradingBalances(
+    new Callback<List<Balance>>() {
+      @Override
+      public void resolve(List<Balance> result) {
+        result.forEach(System.out::println);
+      }
+
+      @Override
+      public void reject(Throwable exception) {
+        // handle the error
+      }
+    });
+
+// instantiate a wallet websocket client
+CryptomarketWSWalletClient walletClient = new CryptomarketWSWalletClientImpl(apiKey, apiSecret);
+
+// get a list of transactions
+walletClient.getTransactions(new Callback<List<Transaction>>() {
+      @Override
+      public void resolve(List<Transaction> result) {
+        result.forEach(System.out::println);
+      }
+    }, null);
+```
+
 
 ## exception handling
 ```java
@@ -83,7 +155,7 @@ Map<String, List<Candle>> candles client.getCandles(new ParamsBuilder()
 // rest exceptions
 CryptomarketRestClient client = new CryptomarketRestClientImpl(api_key, api_secret);
 
-// all rest client methods can throw a CryptomarketApiException
+// all rest client methods can throw a CryptomarketSDKException
 try {
     List<String> symbolIds = new ArrayList<String>(Arrays.asList("eoseth","ethbtc"));
     List<Ticker> tickers = client.getTickers(symbolIds);
@@ -98,13 +170,11 @@ try {
 
 All constants required for calls are in `com.cryptomarket.sdk.params`.
 each enum has the name of the argument that needs it.
-Here is the full list
-
-TODO: update
+Here is a comprehensive list.
 
 ```java
 import com.cryptomarket.params.*;
-// use for candle intervals
+// use for candle intervals and websocket candles subscriptions
 Period._1_MINUTES;
 Period._3_MINUTES;
 Period._5_MINUTES;
@@ -135,48 +205,81 @@ TimeInForce.FOK; // Fill or kill
 TimeInForce.DAY; // Good for the day
 TimeInForce.GTD; // Good till date
 
-// used for creating orders
+// used for order creation
 OrderType.LIMIT;
 OrderType.MARKET;
-OrderType.STOPLIMIT;
-OrderType.STOPMARKET;
+OrderType.STOP_LIMIT;
+OrderType.STOP_MARKET;
+OrderType.TAKE_PROFIT_LIMIT;
+OrderType.TAKE_PROFIT_MARKET;
 
 // used for transfer to another user
-TransferBy.EMAIL;
-TransferBy.USERNAME;
-```
-# OrderRequest
-An OrderRequest is used to create orders. Here is an example with all posible parameters
-```java
-import com.cryptomarket.params.*;
-OrderRequest request = new OrderRequest.Builder()
-    .clientOrderId("123123123")
-    .symbol("eoseth")
-    .side(Side.SELL)
-    .quantity("11111")
-    .orderType(OrderType.STOPLIMIT)
-    .price("123")
-    .stopPrice("123")
-    .timeInForce(TimeInForce.GDT)
-    .expireTime("2020-12-16T17:30:00.000Z")
-    .strictValidate(true)
-    .postOnly(false)
-    .build();
-```
+IdentifyBy.EMAIL;
+IdentifyBy.USERNAME;
 
-# Pagination
-A Pagination is used to request some data.
-Here is an example with all posible parameters, sorting by id
-```java
-import com.cryptomarket.params.*;
-new Pagination.Builder()
-    .sort(Sort.ASC)
-    .by(By.ID)
-    .from("1000000000")
-    .till("1000002000")
-    .limit(20)
-    .offset(40)
-    .build()
+// used for sorting data
+SortBy.TIMESTAMP;
+SortBy.ID;
+SortBy.DATETIME;
+
+// used for transfer
+AccountType.WALLET;
+AccountType.SPOT;
+
+// used for querying transactions
+TransactionStatus.CREATED;
+TransactionStatus.PENDING;
+TransactionStatus.FAILED;
+TransactionStatus.SUCCESS;
+TransactionStatus.ROLLED_BACK;
+
+// used for querying transactions
+TransactionsSubtype.UNCLASSIFIED;
+TransactionsSubtype.BLOCKCHAIN;
+TransactionsSubtype.AIRDROP;
+TransactionsSubtype.AFFILIATE;
+TransactionsSubtype.STAKING;
+TransactionsSubtype.BUY_CRYPTO;
+TransactionsSubtype.OFFCHAIN;
+TransactionsSubtype.FIAT;
+TransactionsSubtype.SUB_ACCOUNT;
+TransactionsSubtype.WALLET_TO_SPOT;
+TransactionsSubtype.SPOT_TO_WALLET;
+TransactionsSubtype.WALLET_TO_DERIVATIVES;
+TransactionsSubtype.DERIVATIVES_TO_WALLET;
+TransactionsSubtype.CHAIN_SWITCH_FROM;
+TransactionsSubtype.CHAIN_SWITCH_TO;
+TransactionsSubtype.INSTANT_EXCHANGE;
+
+// used for querying transactions
+TransactionType.DEPOSIT;
+TransactionType.WITHDRAW;
+TransactionType.TRANSFER;
+TransactionType.SWAP;
+
+// used for withrdawing crypto
+UseOffchain.NEVER;
+UseOffchain.OPTIONALLY;
+UseOffchain.REQUIRED;
+
+// used for ticker websocket subscriptions
+TickerSpeed._1_SECONDS;
+TickerSpeed._3_SECONDS;
+
+// used for orderbook websocket subscriptions
+OBSpeed._100_MILISECONDS;
+OBSpeed._500_MILISECONDS;
+OBSpeed._1000_MILISECONDS;
+
+// used for orderbook subscriptions
+Depth._5;
+Depth._10;
+Depth._20;
+
+// used for order list creation
+ContingencyType.ALL_OR_NONE;
+ContingencyType.ONE_CANCEL_OTHER;
+ContingencyType.ONE_TRIGGER_ONE_CANCEL_OTHER;
 ```
 
 # Checkout our other SDKs

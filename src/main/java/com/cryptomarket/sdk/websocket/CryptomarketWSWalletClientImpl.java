@@ -23,8 +23,8 @@ import com.cryptomarket.sdk.websocket.interceptor.InterceptorFactory;
 
 public class CryptomarketWSWalletClientImpl extends AuthClient implements CryptomarketWSWalletClient {
 
-  public CryptomarketWSWalletClientImpl(String apiKey, String apiSecret) throws IOException {
-    super("wss://api.exchange.cryptomkt.com/api/3/ws/wallet", apiKey, apiSecret);
+  public CryptomarketWSWalletClientImpl(String apiKey, String apiSecret, Integer window) throws IOException {
+    super("wss://api.exchange.cryptomkt.com/api/3/ws/wallet", apiKey, apiSecret, window);
     Map<String, String> subsKeys = this.getSubscritpionKeys();
     // transactions
     subsKeys.put("subscribe_transactions", "transactions");
@@ -35,6 +35,10 @@ public class CryptomarketWSWalletClientImpl extends AuthClient implements Crypto
     subsKeys.put("unsubscribe_wallet_balances", "balance");
     subsKeys.put("wallet_balances", "balance");
     subsKeys.put("wallet_balance_update", "balance");
+  }
+
+  public CryptomarketWSWalletClientImpl(String apiKey, String apiSecret) throws IOException {
+    this(apiKey, apiSecret, 0);
   }
 
   @Override
@@ -128,6 +132,7 @@ public class CryptomarketWSWalletClientImpl extends AuthClient implements Crypto
       Integer limit,
       Integer offset) {
     getTransactions(
+        callback,
         new ParamsBuilder()
             .types(types)
             .subtypes(subtypes)
@@ -141,12 +146,11 @@ public class CryptomarketWSWalletClientImpl extends AuthClient implements Crypto
             .IDFrom(IDFrom)
             .IDTill(IDTill)
             .limit(limit)
-            .offset(offset),
-        callback);
+            .offset(offset));
   }
 
   @Override
-  public void getTransactions(ParamsBuilder paramsBuilder, Callback<List<Transaction>> callback) {
+  public void getTransactions(Callback<List<Transaction>> callback, ParamsBuilder paramsBuilder) {
     Interceptor interceptor = (callback == null) ? null
         : InterceptorFactory.newOfWSResponseList(callback, Transaction.class);
     sendById("get_transactions", (paramsBuilder == null) ? null : paramsBuilder.buildObjectMap(), interceptor);

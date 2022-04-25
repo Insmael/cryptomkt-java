@@ -1,6 +1,5 @@
 package com.cryptomarket.sdk;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.List;
@@ -15,9 +14,8 @@ import com.cryptomarket.params.Side;
 
 import org.junit.Test;
 
-public class TestRestClientTrading {
+public class TestRestClientSpotTrading {
     CryptomarketRestClient client = new CryptomarketRestClientImpl(KeyLoader.getApiKey(), KeyLoader.getApiSecret());
-
 
     @Test
     public void testGetSpotTradingBalance() {

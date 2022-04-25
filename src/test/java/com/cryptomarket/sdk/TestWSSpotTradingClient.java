@@ -2,7 +2,6 @@ package com.cryptomarket.sdk;
 
 import static org.junit.Assert.fail;
 
-import java.io.Console;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -12,55 +11,22 @@ import com.cryptomarket.sdk.models.Balance;
 import com.cryptomarket.sdk.models.Commission;
 import com.cryptomarket.sdk.models.OrderStatus;
 import com.cryptomarket.sdk.models.Report;
-import com.cryptomarket.sdk.models.ReportType;
-import com.cryptomarket.sdk.websocket.CryptomarketWSTradingClient;
-import com.cryptomarket.sdk.websocket.CryptomarketWSTradingClientImpl;
+import com.cryptomarket.sdk.websocket.CryptomarketWSSpotTradingClient;
+import com.cryptomarket.sdk.websocket.CryptomarketWSSpotTradingClientImpl;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class TestWSTradingClient {
+public class TestWSSpotTradingClient {
 
-  CryptomarketWSTradingClient wsClient;
+  CryptomarketWSSpotTradingClient wsClient;
   Boolean authenticated = false;
-
-  static class CallbackFactory {
-    static Callback<Report> newCheckReportCallback() {
-      return new Callback<Report>() {
-        @Override
-        public void resolve(Report result) {
-          Checker.checkReport.accept(result);
-        }
-
-        @Override
-        public void reject(Throwable exception) {
-          System.out.println(exception);
-          fail();
-        }
-      };
-    }
-
-    static Callback<List<Report>> newCheckReportListCallback() {
-      return new Callback<List<Report>>() {
-        @Override
-        public void resolve(List<Report> result) {
-          result.forEach(Checker.checkReport);
-        }
-
-        @Override
-        public void reject(Throwable exception) {
-          System.out.println(exception);
-          fail();
-        }
-      };
-    }
-  }
 
   @Before
   public void before() {
     try {
-      wsClient = new CryptomarketWSTradingClientImpl(KeyLoader.getApiKey(), KeyLoader.getApiSecret());
+      wsClient = new CryptomarketWSSpotTradingClientImpl(KeyLoader.getApiKey(), KeyLoader.getApiSecret(), 10);
       wsClient.connect();
       try {
         TimeUnit.SECONDS.sleep(3);

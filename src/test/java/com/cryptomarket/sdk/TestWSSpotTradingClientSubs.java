@@ -7,15 +7,15 @@ import java.util.concurrent.TimeUnit;
 import com.cryptomarket.params.ParamsBuilder;
 import com.cryptomarket.params.Side;
 import com.cryptomarket.sdk.models.Report;
-import com.cryptomarket.sdk.websocket.CryptomarketWSTradingClient;
-import com.cryptomarket.sdk.websocket.CryptomarketWSTradingClientImpl;
+import com.cryptomarket.sdk.websocket.CryptomarketWSSpotTradingClient;
+import com.cryptomarket.sdk.websocket.CryptomarketWSSpotTradingClientImpl;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class TestWSTradingClientSubs {
-  CryptomarketWSTradingClient wsClient;
+public class TestWSSpotTradingClientSubs {
+  CryptomarketWSSpotTradingClient wsClient;
   Boolean authenticated = false;
   Callback<Boolean> resultCallback = new Callback<Boolean>() {
     @Override
@@ -32,7 +32,7 @@ public class TestWSTradingClientSubs {
   @Before
   public void before() {
     try {
-      wsClient = new CryptomarketWSTradingClientImpl(KeyLoader.getApiKey(), KeyLoader.getApiSecret());
+      wsClient = new CryptomarketWSSpotTradingClientImpl(KeyLoader.getApiKey(), KeyLoader.getApiSecret());
       wsClient.connect();
       try {
         TimeUnit.SECONDS.sleep(3);

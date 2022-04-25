@@ -5,10 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.cryptomarket.params.AccountType;
-import com.cryptomarket.params.AirdropStatus;
 import com.cryptomarket.params.ArgNames;
 import com.cryptomarket.params.SortBy;
-import com.cryptomarket.params.Margin;
 import com.cryptomarket.params.OrderType;
 import com.cryptomarket.params.ParamsBuilder;
 import com.cryptomarket.params.Period;
@@ -22,7 +20,6 @@ import com.cryptomarket.params.IdentifyBy;
 import com.cryptomarket.params.UseOffchain;
 import com.cryptomarket.sdk.exceptions.CryptomarketSDKException;
 import com.cryptomarket.sdk.models.Address;
-import com.cryptomarket.sdk.models.Airdrop;
 import com.cryptomarket.sdk.models.AmountLock;
 import com.cryptomarket.sdk.models.Balance;
 import com.cryptomarket.sdk.models.Candle;
@@ -528,8 +525,7 @@ public class CryptomarketRestClientImpl implements CryptomarketRestClient {
       String from,
       String till,
       Integer limit,
-      Integer offset,
-      Margin margin)
+      Integer offset)
       throws CryptomarketSDKException {
     return getSpotTradesHistory(new ParamsBuilder()
         .symbol(symbol)
@@ -854,36 +850,6 @@ public class CryptomarketRestClientImpl implements CryptomarketRestClient {
         paramsBuilder.build());
     return adapter.objectFromJsonValue(jsonResponse, "result", Boolean.class);
 
-  }
-
-  @Override
-  public List<Airdrop> getAirdrops(
-      String currency,
-      String baseCurrency,
-      String activeAt,
-      List<AirdropStatus> statuses,
-      String transactionID) throws CryptomarketSDKException {
-    return getAirdrops(new ParamsBuilder()
-        .currency(currency)
-        .baseCurrency(baseCurrency)
-        .activeAt(activeAt)
-        .statuses(statuses)
-        .transactionID(transactionID));
-  }
-
-  @Override
-  public List<Airdrop> getAirdrops(ParamsBuilder paramsBuilder)
-      throws CryptomarketSDKException {
-    String jsonResponse = httpClient.get(
-        "wallet/airdrops",
-        paramsBuilder.build());
-    return adapter.listFromJson(jsonResponse, Airdrop.class);
-  }
-
-  @Override
-  public void claimAirdrop(String currency) throws CryptomarketSDKException {
-    String jsonResponse = httpClient.get(String.format("wallet/airdrops/%s/claim", currency), null);
-    // TODO include return when known
   }
 
   @Override

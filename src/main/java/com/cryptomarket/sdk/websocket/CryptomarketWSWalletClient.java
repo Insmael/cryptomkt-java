@@ -199,6 +199,6 @@ public interface CryptomarketWSWalletClient extends CryptomarketWS {
    * @param offset              Optional. Default is 0. Max is 100000
    */
   public void getTransactions(
-      ParamsBuilder paramsBuilder,
-      Callback<List<Transaction>> callback);
+    Callback<List<Transaction>> callback,
+      ParamsBuilder paramsBuilder);
 }

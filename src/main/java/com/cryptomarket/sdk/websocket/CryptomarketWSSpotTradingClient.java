@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>
  * Requires API keys to make socket calls
  */
-public interface CryptomarketWSTradingClient extends CryptomarketWS {
+public interface CryptomarketWSSpotTradingClient extends CryptomarketWS {
 
   /**
    * subscribe to a feed of execution reports of the user's orders
