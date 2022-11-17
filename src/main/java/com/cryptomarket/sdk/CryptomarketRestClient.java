@@ -15,10 +15,12 @@ import com.cryptomarket.params.TimeInForce;
 import com.cryptomarket.params.TransactionStatus;
 import com.cryptomarket.params.TransactionSubtype;
 import com.cryptomarket.params.TransactionType;
+import com.cryptomarket.params.TransferType;
 import com.cryptomarket.params.IdentifyBy;
 import com.cryptomarket.params.OrderBuilder;
 import com.cryptomarket.params.UseOffchain;
 import com.cryptomarket.sdk.exceptions.CryptomarketSDKException;
+import com.cryptomarket.sdk.models.SubAccountSettings;
 import com.cryptomarket.sdk.models.Address;
 import com.cryptomarket.sdk.models.AmountLock;
 import com.cryptomarket.sdk.models.Balance;
@@ -30,6 +32,8 @@ import com.cryptomarket.sdk.models.OrderBook;
 import com.cryptomarket.sdk.models.Price;
 import com.cryptomarket.sdk.models.PriceHistory;
 import com.cryptomarket.sdk.models.PublicTrade;
+import com.cryptomarket.sdk.models.SubAccount;
+import com.cryptomarket.sdk.models.SubAccountBalances;
 import com.cryptomarket.sdk.models.Symbol;
 import com.cryptomarket.sdk.models.Ticker;
 import com.cryptomarket.sdk.models.TickerPrice;
@@ -1524,4 +1528,131 @@ public interface CryptomarketRestClient {
    */
   public List<AmountLock> getAmountLocks(ParamsBuilder paramsBuilder)
       throws CryptomarketSDKException;
+
+  // SUB ACOUNTS
+
+  /**
+   * Returns list of sub-accounts per a super account.
+   * <p>
+   * Requires no API key Access Rights.
+   * <p>
+   * https://api.exchange.cryptomkt.com/#get-sub-accounts-list
+   *
+   * @return A list of subaccounts
+   * @throws CryptomarketSDKException
+   */
+  public List<SubAccount> getSubAccountList() throws CryptomarketSDKException;
+
+  /**
+   * Freezes sub-accounts listed. It implies that the Sub-accounts frozen wouldn't be able to:
+   * <p>
+   * <ul>
+   * <li> login
+   * <li> withdraw funds
+   * <li> trade
+   * <li> complete pending orders
+   * <li> use API keys
+   * </ul>
+   * <p>
+   * For any sub-account listed, all orders will be canceled and all funds will be transferred form the Trading balance.
+   * <p>
+   * Requires no API key Access Rights
+   * <p>
+   * https://api.exchange.cryptomkt.com/#freeze-sub-account
+   *
+   * @param subAccountIDs A list of sub-account IDs to freeze
+   * @return true if the freeze was successful
+   * @throws CryptomarketSDKException
+   */
+  public Boolean freezeSubAccount(List<String> subAccountIDs) throws CryptomarketSDKException;
+
+  /**
+   * Activates sub-accounts listed. It would make sub-accounts active after being frozen
+   * <p>
+   * Requires no API key Access Rights
+   * <p>
+   * https://api.exchange.cryptomkt.com/#activate-sub-account
+   *
+   * @param subAccountIDs A list of account IDs to activate
+   * @return true if the activation was successful
+   * @throws CryptomarketSDKException
+   */
+  public Boolean activateSubAccount(List<String> subAccountIDs) throws CryptomarketSDKException;
+
+  /**
+   * Transfers funds from the super-account to a sub-account or from a sub-account to the super-account
+   * <p>
+   * Requires the "Withdraw cryptocurrencies" API key Access Right
+   * <p>
+   * https://api.exchange.cryptomkt.com/#transfer-funds
+   *
+   * @param subAccountID The account ID of the account to transfer from or to
+   * @param amount the amount of currency to transfer
+   * @param currency the currency to transfer
+   * @param transferType the type of transfer. TransferType.TO_SUB_ACCOUNT or TransferType.FROM_SUB_ACCOUNT
+   * @return The transaction ID of the tranfer
+   * @throws CryptomarketSDKException
+   */
+  public String transferFunds(String subAccountID, String amount, String currency, TransferType transferType)
+      throws CryptomarketSDKException;
+
+  /**
+   * Returns a list of withdrawal settings for sub-accounts listed
+   * <p>
+   * Requires the "Payment information" API key Access Right
+   * <p>
+   * https://api.exchange.cryptomkt.com/#get-acl-settings
+   *
+   * @param subAccountIDs The list of sub-account IDs of the sub-accounts to get the ACL settings. The subAccountID filed is ignored.
+   * @return A list of withdraw settings for sub-accounts listed
+   * @throws CryptomarketSDKException
+   */
+  public List<SubAccountSettings> getACLSettings(List<String> subAccountIDs) throws CryptomarketSDKException;
+
+  /**
+   * Disables or enables withdrawals for a sub-account
+   * <p>
+   * Requires the "Payment information" API key Access Right
+   * <p>
+   * https://api.exchange.cryptomkt.com/#change-acl-settings
+   *
+   * @param subAccountIDs The list of sub-account IDs to change the ACL settings
+   * @param settings The settings to change the ACL settings
+   * @return The list of the updated withdraw settings of the changed sub-account
+   * @throws CryptomarketSDKException
+   */
+  public List<SubAccountSettings> changeACLSettings(List<String> subAccountIDs, SubAccountSettings settings)
+      throws CryptomarketSDKException;
+
+  /**
+   * Returns non-zero balance values for a sub-account.
+   * <p>
+   * Report will include the wallet and Trading balances for each currency.
+   * <p>
+   * It is functional with no regard to the state of a sub-account. All account types are optional and appears only in case of non-zero balance
+   * <p>
+   * Requires the "Payment information" API key Access Right
+   * <p>
+   * https://api.exchange.cryptomkt.com/#get-sub-account-balance
+   *
+   * @param subAccountID the sub-account ID of the sub-account to get the balances
+   * @return A list of balances of the sub-account
+   * @throws CryptomarketSDKException
+   */
+  public SubAccountBalances getSubAccountBalance(String subAccountID) throws CryptomarketSDKException;
+
+  /**
+   * Returns sub-account crypto address for currency
+   * <p>
+   * Requires the "Payment information" API key Access Right
+   * <p>
+   * https://api.exchange.cryptomkt.com/#get-sub-account-crypto-address
+   *
+   * @param subAccountID the sub-account ID to get the crypto address
+   * @param currency currency code to get the crypto address
+   * @return The crypto address
+   * @throws CryptomarketSDKException
+   */
+  public String getSubAccountCryptoAddress(String subAccountID, String currency) throws CryptomarketSDKException;
+
 }

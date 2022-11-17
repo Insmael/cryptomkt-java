@@ -18,6 +18,7 @@ import com.cryptomarket.params.TimeInForce;
 import com.cryptomarket.params.TransactionStatus;
 import com.cryptomarket.params.TransactionSubtype;
 import com.cryptomarket.params.TransactionType;
+import com.cryptomarket.params.TransferType;
 import com.cryptomarket.params.IdentifyBy;
 import com.cryptomarket.params.OrderBuilder;
 import com.cryptomarket.params.UseOffchain;
@@ -33,6 +34,9 @@ import com.cryptomarket.sdk.models.OrderBook;
 import com.cryptomarket.sdk.models.Price;
 import com.cryptomarket.sdk.models.PriceHistory;
 import com.cryptomarket.sdk.models.PublicTrade;
+import com.cryptomarket.sdk.models.SubAccount;
+import com.cryptomarket.sdk.models.SubAccountBalances;
+import com.cryptomarket.sdk.models.SubAccountSettings;
 import com.cryptomarket.sdk.models.Symbol;
 import com.cryptomarket.sdk.models.Ticker;
 import com.cryptomarket.sdk.models.TickerPrice;
@@ -909,5 +913,79 @@ public class CryptomarketRestClientImpl implements CryptomarketRestClient {
         paramsBuilder.build());
     return adapter.listFromJson(jsonResponse, AmountLock.class);
 
+  }
+
+  @Override
+  public List<SubAccount> getSubAccountList() throws CryptomarketSDKException {
+    String jsonResponse = httpClient.get("sub-account", null);
+    return adapter.listFromJson(jsonResponse, SubAccount.class);
+  }
+
+  @Override
+  public Boolean freezeSubAccount(List<String> subAccountIDs) throws CryptomarketSDKException {
+    ParamsBuilder params = new ParamsBuilder()
+        .subAccountIDs(subAccountIDs);
+    String jsonResponse = httpClient.get("sub-account/freeze", params.build());
+    return adapter.objectFromJsonValue(jsonResponse, "result", Boolean.class);
+  }
+
+  @Override
+  public Boolean activateSubAccount(List<String> subAccountIDs) throws CryptomarketSDKException {
+    ParamsBuilder params = new ParamsBuilder()
+        .subAccountIDs(subAccountIDs);
+    String jsonResponse = httpClient.get("sub-account/activate", params.build());
+    return adapter.objectFromJsonValue(jsonResponse, "result", Boolean.class);
+  }
+
+  @Override
+  public String transferFunds(String subAccountID, String amount, String currency, TransferType transferType)
+      throws CryptomarketSDKException {
+    ParamsBuilder params = new ParamsBuilder()
+        .subAccountID(subAccountID)
+        .amount(amount)
+        .currency(currency)
+        .transferType(transferType);
+    String jsonResponse = httpClient.get("sub-account/transfer", params.build());
+    return adapter.objectFromJsonValue(jsonResponse, "result", String.class);
+  }
+
+  @Override
+  public List<SubAccountSettings> getACLSettings(List<String> subAccountIDs) throws CryptomarketSDKException {
+    ParamsBuilder params = new ParamsBuilder()
+        .subAccountIDs(subAccountIDs);
+    String jsonResponse = httpClient.get("sub-account/acl", params.build());
+    return adapter.listFromJson(jsonResponse, SubAccountSettings.class);
+  }
+
+  @Override
+  public List<SubAccountSettings> changeACLSettings(List<String> subAccountIDs, SubAccountSettings settings)
+      throws CryptomarketSDKException {
+    ParamsBuilder params = new ParamsBuilder()
+        .subAccountIDs(subAccountIDs)
+        .depositAddressGenerationEnabled(settings.getDepositAddressGenerationEnabled())
+        .withdrawEnabled(settings.getWithdrawEnabled())
+        .createdAt(settings.getCreatedAt())
+        .description(settings.getDescription())
+        .updatedAt(settings.getUpdatedAt());
+    String jsonResponse = httpClient.get("sub-account/acl", params.build());
+    return adapter.listFromJson(jsonResponse, SubAccountSettings.class);
+  }
+
+  @Override
+  public SubAccountBalances getSubAccountBalance(String subAccountID) throws CryptomarketSDKException {
+    String jsonResponse = httpClient.get(String.format("sub-account/balance/%s", subAccountID), null);
+    return adapter.objectFromJson(jsonResponse, SubAccountBalances.class);
+  }
+
+  @Override
+  public String getSubAccountCryptoAddress(String subAccountID, String currency) throws CryptomarketSDKException {
+    String jsonResponse = httpClient.get(
+        String.format("sub-account/address/%s/%s", subAccountID, currency),
+        null);
+    class Address {
+      String address;
+    }
+    Address address = adapter.objectFromJsonValue(jsonResponse, "result", Address.class);
+    return address.address;
   }
 }

@@ -13,6 +13,7 @@ import com.cryptomarket.sdk.models.adapters.OrderStatusAdapter;
 import com.cryptomarket.sdk.models.adapters.OrderTypeAdapter;
 import com.cryptomarket.sdk.models.adapters.ReportTypeAdapter;
 import com.cryptomarket.sdk.models.adapters.SideAdapter;
+import com.cryptomarket.sdk.models.adapters.SubAccountStatusAdapter;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import com.squareup.moshi.Types;
@@ -24,6 +25,7 @@ public class Adapter {
       .add(new OrderTypeAdapter())
       .add(new SideAdapter())
       .add(new ReportTypeAdapter())
+      .add(new SubAccountStatusAdapter())
       .build();
 
   public <T> T objectFromJson(String json, Class<T> cls) throws CryptomarketSDKException {

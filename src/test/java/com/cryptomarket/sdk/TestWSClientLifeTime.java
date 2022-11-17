@@ -4,11 +4,11 @@ import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 
-import com.cryptomarket.sdk.models.Balance;
-import com.cryptomarket.sdk.models.WSOrderBook;
+import com.cryptomarket.params.NotificationType;
+import com.cryptomarket.sdk.exceptions.CryptomarketSDKException;
 import com.cryptomarket.sdk.websocket.CryptomarketWSWalletClient;
 import com.cryptomarket.sdk.websocket.CryptomarketWSWalletClientImpl;
 import com.cryptomarket.sdk.websocket.CryptomarketWSMarketDataClient;
@@ -19,6 +19,12 @@ import com.cryptomarket.sdk.websocket.CryptomarketWSSpotTradingClientImpl;
 import org.junit.Test;
 
 public class TestWSClientLifeTime {
+  BiConsumer<List<String>, CryptomarketSDKException> checkException = (result, exception) -> {
+    if (exception != null) {
+      System.out.println("Exception");
+      fail();
+    }
+  };
 
   @Test
   public void testPublicClientLifetime() {
@@ -34,28 +40,21 @@ public class TestWSClientLifeTime {
         public void onConnect() {
           System.out.println("connected");
           this.subscribeToFullOrderBook(
-              new Callback<Map<String, WSOrderBook>>() {
-                public void resolve(Map<String, WSOrderBook> result) {
-                  System.out.println("subscription feed");
-                };
-
-                @Override
-                public void reject(Throwable exception) {
-                  System.out.println("error in subscription feed");
+              (data, notificationType) -> {
+                if (notificationType == NotificationType.UPDATE) {
+                  System.out.println("update");
                 }
+                if (notificationType.isSnapshot()) {
+                  System.out.println("snapshot");
+                }
+                data.forEach((k, v) -> {
+                  System.out.println("key:" + k.toString());
+                  System.out.println("val:" + v.toString());
+                });
+
               },
               Arrays.asList("EOSETH"),
-              new Callback<List<String>>() {
-                @Override
-                public void resolve(List<String> result) {
-                  System.out.println("subscribed successfully");
-                }
-
-                @Override
-                public void reject(Throwable exception) {
-                  System.out.println("failed to subscribe");
-                }
-              });
+              checkException);
           try {
             TimeUnit.SECONDS.sleep(3);
           } catch (InterruptedException e) {
@@ -73,7 +72,9 @@ public class TestWSClientLifeTime {
       wsClient.connect();
       try {
         TimeUnit.SECONDS.sleep(8);
-      } catch (InterruptedException e) {
+      } catch (
+
+      InterruptedException e) {
         fail();
       }
     } catch (Exception e) {
@@ -135,14 +136,9 @@ public class TestWSClientLifeTime {
         @Override
         public void onConnect() {
           System.out.println("connected");
-          this.getWalletBalances(new Callback<List<Balance>>() {
-            @Override
-            public void resolve(List<Balance> result) {
-              System.out.println("request returning");
-            }
-
-            @Override
-            public void reject(Throwable exception) {
+          this.getWalletBalances((balanceList, exception) -> {
+            if (exception != null) {
+              System.out.println(exception.toString());
               fail();
             }
           });

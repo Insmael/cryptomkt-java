@@ -6,7 +6,6 @@ import java.util.concurrent.TimeUnit;
 
 import com.cryptomarket.params.ParamsBuilder;
 import com.cryptomarket.params.Side;
-import com.cryptomarket.sdk.models.Report;
 import com.cryptomarket.sdk.websocket.CryptomarketWSSpotTradingClient;
 import com.cryptomarket.sdk.websocket.CryptomarketWSSpotTradingClientImpl;
 
@@ -69,19 +68,15 @@ public class TestWSSpotTradingClientSubs {
 
   @Test
   public void testReportSubscription() {
-    wsClient.subscribeToReports(new Callback<Report>() {
-      @Override
-      public void resolve(Report result) {
-        Checker.checkReport.accept(result);
-      }
-    }, new Callback<Boolean>() {
-      @Override
-      public void resolve(Boolean result) {
-        if (!result) {
-          fail();
-        }
-      }
-    });
+    wsClient.subscribeToReports(
+        (data, notificationType) -> {
+          data.forEach(report -> Checker.checkReport.accept(report));
+        },
+        (result, exception) -> {
+          if (!result) {
+            fail();
+          }
+        });
     try {
       TimeUnit.SECONDS.sleep(3);
     } catch (InterruptedException e) {
@@ -108,12 +103,9 @@ public class TestWSSpotTradingClientSubs {
     } catch (InterruptedException e) {
       fail();
     }
-    wsClient.unsubscribeToReports(new Callback<Boolean>() {
-      @Override
-      public void resolve(Boolean result) {
-        if (!result) {
-          fail();
-        }
+    wsClient.unsubscribeToReports((result, exception) -> {
+      if (!result) {
+        fail();
       }
     });
     try {

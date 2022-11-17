@@ -5,14 +5,14 @@ import static org.junit.Assert.fail;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 
 import com.cryptomarket.params.ContingencyType;
 import com.cryptomarket.params.OrderBuilder;
 import com.cryptomarket.params.OrderStatus;
 import com.cryptomarket.params.ParamsBuilder;
 import com.cryptomarket.params.Side;
-import com.cryptomarket.sdk.models.Balance;
-import com.cryptomarket.sdk.models.Commission;
+import com.cryptomarket.sdk.exceptions.CryptomarketSDKException;
 import com.cryptomarket.sdk.models.Report;
 import com.cryptomarket.sdk.websocket.CryptomarketWSSpotTradingClient;
 import com.cryptomarket.sdk.websocket.CryptomarketWSSpotTradingClientImpl;
@@ -48,19 +48,13 @@ public class TestWSSpotTradingClient {
 
   @Test
   public void testGetSpotTradingBalances() {
-    wsClient.getSpotTradingBalances(
-        new Callback<List<Balance>>() {
-          @Override
-          public void resolve(List<Balance> result) {
-            System.out.println(result);
-            result.forEach(Checker.checkBalance);
-          }
-
-          @Override
-          public void reject(Throwable exception) {
-            fail();
-          }
-        });
+    wsClient.getSpotTradingBalances((result, exception) -> {
+      if (exception != null) {
+        fail();
+      }
+      System.out.println(result);
+      result.forEach(Checker.checkBalance);
+    });
     try {
       TimeUnit.SECONDS.sleep(3);
     } catch (InterruptedException e) {
@@ -70,11 +64,12 @@ public class TestWSSpotTradingClient {
 
   @Test
   public void testSpotTradingBalance() {
-    wsClient.getSpotTradingBalanceOfSymbol("EOSETH", new Callback<Balance>() {
-      @Override
-      public void resolve(Balance result) {
-        Checker.checkBalance.accept(result);
+    wsClient.getSpotTradingBalanceOfCurrency("EOS", (result, exception) -> {
+      if (exception != null) {
+        System.out.println(exception);
+        fail();
       }
+      Checker.checkBalance.accept(result);
     });
     try {
       TimeUnit.SECONDS.sleep(3);
@@ -96,18 +91,9 @@ public class TestWSSpotTradingClient {
             .price("10000")
             .quantity("0.01")
             .clientOrderID(oldClientOrderID),
-        new Callback<Report>() {
-          @Override
-          public void resolve(Report result) {
-            Checker.checkReport.accept(result);
-          }
-
-          @Override
-          public void reject(Throwable exception) {
-            fail();
-          }
+        (report, exception) -> {
+          Checker.checkReport.accept(report);
         });
-
     try {
       TimeUnit.SECONDS.sleep(3);
     } catch (InterruptedException e) {
@@ -115,24 +101,18 @@ public class TestWSSpotTradingClient {
     }
     // check
     wsClient.getAllActiveOrders(
-        new Callback<List<Report>>() {
-          @Override
-          public void resolve(List<Report> result) {
-            Boolean present = false;
-            for (Report order : result) {
-              if (order.getClientOrderID().equals(oldClientOrderID))
-                present = true;
-            }
-            if (!present)
-              fail("could not find");
-          }
-
-          @Override
-          public void reject(Throwable exception) {
+        (reportList, exception) -> {
+          if (exception != null) {
             fail();
           }
+          Boolean present = false;
+          for (Report order : reportList) {
+            if (order.getClientOrderID().equals(oldClientOrderID))
+              present = true;
+          }
+          if (!present)
+            fail("could not find");
         });
-
     try {
       TimeUnit.SECONDS.sleep(3);
     } catch (InterruptedException e) {
@@ -146,20 +126,14 @@ public class TestWSSpotTradingClient {
         "0.02",
         "2000",
         null,
-        new Callback<Report>() {
-          @Override
-          public void resolve(Report result) {
-            if (!result.getOriginalClientOrderID().equals(oldClientOrderID))
-              fail();
+        (report, exception) -> {
+          if (exception != null) {
+            fail();
           }
-
-          @Override
-          public void reject(Throwable exception) {
-            exception.printStackTrace();
-            fail("could not replace");
+          if (!report.getOriginalClientOrderID().equals(oldClientOrderID)) {
+            fail();
           }
         });
-
     try {
       TimeUnit.SECONDS.sleep(3);
     } catch (InterruptedException e) {
@@ -169,20 +143,14 @@ public class TestWSSpotTradingClient {
     // cancel
     wsClient.cancelSpotOrder(
         newClientOrderID,
-        new Callback<Report>() {
-          @Override
-          public void resolve(Report result) {
-            if (!result.getStatus().equals(OrderStatus.CANCELED))
-              fail();
-            if (result.getClientOrderID().equals(oldClientOrderID))
-              fail();
+        (report, exception) -> {
+          if (exception != null) {
+            fail();
           }
-
-          @Override
-          public void reject(Throwable exception) {
-            exception.printStackTrace();
-            fail("could not cancel");
-          }
+          if (!report.getStatus().equals(OrderStatus.CANCELED))
+            fail();
+          if (report.getClientOrderID().equals(oldClientOrderID))
+            fail();
         });
 
     try {
@@ -204,32 +172,27 @@ public class TestWSSpotTradingClient {
               .quantity("0.01"),
           null);
     }
-    Callback<List<Report>> callback = new Callback<List<Report>>() {
-      @Override
-      public void resolve(List<Report> result) {
-        if (result.size() != 5) {
-          fail();
-        }
-        result.forEach(Checker.checkReport);
-      }
-
-      @Override
-      public void reject(Throwable exception) {
+    BiConsumer<List<Report>, CryptomarketSDKException> resultBiConsumer = (reportList, exception) -> {
+      if (exception != null) {
         fail();
       }
+      if (reportList.size() != 5) {
+        fail();
+      }
+      reportList.forEach(Checker.checkReport);
     };
     try {
       TimeUnit.SECONDS.sleep(3);
     } catch (InterruptedException e) {
       fail();
     }
-    wsClient.getAllActiveOrders(callback);
+    wsClient.getAllActiveOrders(resultBiConsumer);
     try {
       TimeUnit.SECONDS.sleep(3);
     } catch (InterruptedException e) {
       fail();
     }
-    wsClient.cancelAllSpotOrders(callback);
+    wsClient.cancelAllSpotOrders(resultBiConsumer);
     try {
       TimeUnit.SECONDS.sleep(3);
     } catch (InterruptedException e) {
@@ -239,11 +202,8 @@ public class TestWSSpotTradingClient {
 
   @Test
   public void testGetSpotTradingCommissions() {
-    wsClient.getSpotCommissions(new Callback<List<Commission>>() {
-      @Override
-      public void resolve(List<Commission> result) {
-        result.forEach(Checker.checkCommission);
-      }
+    wsClient.getSpotCommissions((result, exception) -> {
+      result.forEach(Checker.checkCommission);
     });
     try {
       TimeUnit.SECONDS.sleep(3);
@@ -254,11 +214,8 @@ public class TestWSSpotTradingClient {
 
   @Test
   public void testGetSpotTradingCommission() {
-    wsClient.getSpotCommissionOfSymbol("EOSETH", new Callback<Commission>() {
-      @Override
-      public void resolve(Commission result) {
-        Checker.checkCommission.accept(result);
-      }
+    wsClient.getSpotCommissionOfSymbol("EOSETH", (result, exception) -> {
+      Checker.checkCommission.accept(result);
     });
     try {
       TimeUnit.SECONDS.sleep(3);
@@ -291,17 +248,12 @@ public class TestWSSpotTradingClient {
                 .quantity(quantity)
                 .price(price)),
         orderListID,
-        new Callback<List<Report>>() {
-          @Override
-          public void resolve(List<Report> result) {
-            System.out.println(result);
-            result.forEach(Checker.checkReport);
-          }
-
-          @Override
-          public void reject(Throwable exception) {
+        (result, exception) -> {
+          if (exception != null) {
             System.out.println(exception);
           }
+          System.out.println(result);
+          result.forEach(Checker.checkReport);
         });
     try {
       TimeUnit.SECONDS.sleep(5);

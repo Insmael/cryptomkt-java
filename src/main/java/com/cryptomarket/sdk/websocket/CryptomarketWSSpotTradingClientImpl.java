@@ -4,19 +4,18 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 import com.cryptomarket.params.ContingencyType;
+import com.cryptomarket.params.NotificationType;
 import com.cryptomarket.params.OrderBuilder;
 import com.cryptomarket.params.OrderType;
 import com.cryptomarket.params.ParamsBuilder;
 import com.cryptomarket.params.Side;
 import com.cryptomarket.params.TimeInForce;
-import com.cryptomarket.sdk.Callback;
-import com.cryptomarket.sdk.exceptions.CryptomarketAPIException;
 import com.cryptomarket.sdk.exceptions.CryptomarketSDKException;
 import com.cryptomarket.sdk.models.Balance;
 import com.cryptomarket.sdk.models.Commission;
-import com.cryptomarket.sdk.models.ErrorBody;
 import com.cryptomarket.sdk.models.Report;
 import com.cryptomarket.sdk.models.WSJsonResponse;
 import com.cryptomarket.sdk.websocket.interceptor.Interceptor;
@@ -25,8 +24,17 @@ import com.squareup.moshi.JsonDataException;
 
 public class CryptomarketWSSpotTradingClientImpl extends AuthClient implements CryptomarketWSSpotTradingClient {
 
+  /**
+   * creates a new CryptomarketWSSpotTradingClient instance
+   *
+   * @param apiKey    public API key
+   * @param apiSecret secret API key
+   * @param window    Maximum difference between the send of the request and the
+   *                  moment of request processing in milliseconds
+   * @throws IOException
+   */
   public CryptomarketWSSpotTradingClientImpl(String apiKey, String apiSecret, Integer window) throws IOException {
-    super("wss://api.exchange.cryptomkt.com/api/3/ws/trading", apiKey, apiSecret);
+    super("wss://api.exchange.cryptomkt.com/api/3/ws/trading", apiKey, apiSecret, window);
     Map<String, String> subsKeys = this.getSubscritpionKeys();
     // reports
     subsKeys.put("spot_subscribe", "reports");
@@ -35,54 +43,60 @@ public class CryptomarketWSSpotTradingClientImpl extends AuthClient implements C
     subsKeys.put("spot_order", "reports");
   }
 
+  /**
+   * creates a new CryptomarketWSSpotTradingClient instance, using the default
+   * window of 10 seconds
+   *
+   * @param apiKey    public API key
+   * @param apiSecret secret API key
+   * @throws IOException
+   */
   public CryptomarketWSSpotTradingClientImpl(String apiKey, String apiSecret) throws IOException {
     this(apiKey, apiSecret, 0);
   }
 
   @Override
-  public void subscribeToReports(Callback<Report> callback, Callback<Boolean> resultCallback) {
+  public void subscribeToReports(BiConsumer<List<Report>, NotificationType> notificationBiConsumer,
+      BiConsumer<Boolean, CryptomarketSDKException> resultBiConsumer) {
     Interceptor feedInterceptor = new Interceptor() {
       @Override
       public void makeCall(WSJsonResponse response) {
-        ErrorBody error = response.getError();
-        if (error != null) {
-          callback.reject(new CryptomarketAPIException(error));
-        } else if (response.getMethod().equals("spot_orders")) {
+        if (response.getMethod().equals("spot_orders")) {
           try {
             List<Report> reports = adapter.listFromValue(response.getParams(), Report.class);
             if (reports != null) {
-              reports.forEach(report -> callback.resolve(report));
+              notificationBiConsumer.accept(reports, NotificationType.SNAPSHOT);
             }
           } catch (JsonDataException e) {
-            callback.reject(new CryptomarketSDKException("unkown data format"));
           }
         } else if (response.getMethod().equals("spot_order")) {
           try {
             Report report = adapter.objectFromValue(response.getParams(), Report.class);
-            callback.resolve(report);
+            List<Report> reports = new ArrayList<Report>();
+            reports.add(report);
+            notificationBiConsumer.accept(reports, NotificationType.UPDATE);
           } catch (JsonDataException e) {
-            callback.reject(new CryptomarketSDKException("unkown data format"));
           }
         }
       }
     };
-    Interceptor resultInterceptor = (resultCallback == null)
+    Interceptor resultInterceptor = (resultBiConsumer == null)
         ? null
-        : InterceptorFactory.newOfWSResponseObject(resultCallback, Boolean.class);
+        : InterceptorFactory.newOfWSResponseObject(resultBiConsumer, Boolean.class);
     sendSubscription("spot_subscribe", null, feedInterceptor, resultInterceptor);
   }
 
   @Override
-  public void unsubscribeToReports(Callback<Boolean> callback) {
-    Interceptor interceptor = (callback == null)
+  public void unsubscribeToReports(BiConsumer<Boolean, CryptomarketSDKException> resultBiConsumer) {
+    Interceptor interceptor = (resultBiConsumer == null)
         ? null
-        : InterceptorFactory.newOfWSResponseObject(callback, Boolean.class);
+        : InterceptorFactory.newOfWSResponseObject(resultBiConsumer, Boolean.class);
     sendUnsubscription("spot_unsubscribe", null, interceptor);
   }
 
   @Override
-  public void getAllActiveOrders(Callback<List<Report>> callback) {
-    Interceptor interceptor = InterceptorFactory.newOfWSResponseList(callback, Report.class);
+  public void getAllActiveOrders(BiConsumer<List<Report>, CryptomarketSDKException> resultBiConsumer) {
+    Interceptor interceptor = InterceptorFactory.newOfWSResponseList(resultBiConsumer, Report.class);
     sendById("spot_get_orders", null, interceptor);
 
   }
@@ -102,7 +116,7 @@ public class CryptomarketWSSpotTradingClientImpl extends AuthClient implements C
       Boolean postOnly,
       String takeRate,
       String makeRate,
-      Callback<Report> callback) {
+      BiConsumer<Report, CryptomarketSDKException> resultBiConsumer) {
     ParamsBuilder paramsBuilder = new ParamsBuilder()
         .symbol(symbol)
         .side(side)
@@ -117,16 +131,16 @@ public class CryptomarketWSSpotTradingClientImpl extends AuthClient implements C
         .postOnly(postOnly)
         .takeRate(takeRate)
         .makeRate(makeRate);
-    createSpotOrder(paramsBuilder, callback);
+    createSpotOrder(paramsBuilder, resultBiConsumer);
   }
 
   @Override
   public void createSpotOrder(
       ParamsBuilder paramsBuilder,
-      Callback<Report> callback) {
-    Interceptor interceptor = (callback == null)
+      BiConsumer<Report, CryptomarketSDKException> resultBiConsumer) {
+    Interceptor interceptor = (resultBiConsumer == null)
         ? null
-        : InterceptorFactory.newOfWSResponseObject(callback, Report.class);
+        : InterceptorFactory.newOfWSResponseObject(resultBiConsumer, Report.class);
     sendById("spot_new_order", paramsBuilder.buildObjectMap(), interceptor);
   }
 
@@ -135,82 +149,85 @@ public class CryptomarketWSSpotTradingClientImpl extends AuthClient implements C
       ContingencyType contingencyType,
       List<OrderBuilder> orders,
       String orderListID,
-      Callback<List<Report>> callback) {
+      BiConsumer<List<Report>, CryptomarketSDKException> resultBiConsumer) {
     List<Map<String, Object>> orderListData = new ArrayList<>();
     orders.forEach(orderBuilder -> orderListData.add(orderBuilder.buildObjectMap()));
     ParamsBuilder params = new ParamsBuilder()
         .orderListID(orderListID)
         .contingencyType(contingencyType)
         .orders(orderListData);
-    Interceptor interceptor = (callback == null)
+    Interceptor interceptor = (resultBiConsumer == null)
         ? null
-        : InterceptorFactory.newOfWSResponseList(callback, Report.class);
+        : InterceptorFactory.newOfWSResponseList(resultBiConsumer, Report.class);
     sendById("spot_new_order_list", params.buildObjectMap(), interceptor);
 
   }
 
   @Override
-  public void cancelSpotOrder(String clientOrderID, Callback<Report> callback) {
+  public void cancelSpotOrder(String clientOrderID, BiConsumer<Report, CryptomarketSDKException> resultBiConsumer) {
     ParamsBuilder params = new ParamsBuilder().clientOrderID(clientOrderID);
-    Interceptor interceptor = (callback == null)
+    Interceptor interceptor = (resultBiConsumer == null)
         ? null
-        : InterceptorFactory.newOfWSResponseObject(callback, Report.class);
+        : InterceptorFactory.newOfWSResponseObject(resultBiConsumer, Report.class);
     sendById("spot_cancel_order", params.buildObjectMap(), interceptor);
   }
 
   @Override
   public void replaceSpotOrder(String clientOrderID, String newClientOrderID, String quantity, String price,
-      Boolean strictValidate, Callback<Report> callback) {
+      Boolean strictValidate, BiConsumer<Report, CryptomarketSDKException> resultBiConsumer) {
     ParamsBuilder paramsBuilder = new ParamsBuilder()
         .clientOrderID(clientOrderID)
         .newClientOrderID(newClientOrderID)
         .quantity(quantity)
         .price(price)
         .strictValidate(strictValidate);
-    Interceptor interceptor = (callback == null)
+    Interceptor interceptor = (resultBiConsumer == null)
         ? null
-        : InterceptorFactory.newOfWSResponseObject(callback, Report.class);
+        : InterceptorFactory.newOfWSResponseObject(resultBiConsumer, Report.class);
     sendById("spot_replace_order", paramsBuilder.buildObjectMap(), interceptor);
   }
 
   @Override
-  public void cancelAllSpotOrders(Callback<List<Report>> callback) {
-    Interceptor interceptor = (callback == null)
+  public void cancelAllSpotOrders(BiConsumer<List<Report>, CryptomarketSDKException> resultBiConsumer) {
+    Interceptor interceptor = (resultBiConsumer == null)
         ? null
-        : InterceptorFactory.newOfWSResponseList(callback, Report.class);
+        : InterceptorFactory.newOfWSResponseList(resultBiConsumer, Report.class);
     sendById("spot_cancel_orders", null, interceptor);
   }
 
   @Override
-  public void getSpotTradingBalances(Callback<List<Balance>> callback) {
-    Interceptor interceptor = (callback == null)
+  public void getSpotTradingBalances(BiConsumer<List<Balance>, CryptomarketSDKException> resultBiConsumer) {
+    Interceptor interceptor = (resultBiConsumer == null)
         ? null
-        : InterceptorFactory.newOfWSResponseList(callback, Balance.class);
+        : InterceptorFactory.newOfWSResponseList(resultBiConsumer, Balance.class);
     sendById("spot_balances", null, interceptor);
   }
 
   @Override
-  public void getSpotTradingBalanceOfSymbol(String symbol, Callback<Balance> callback) {
-    Interceptor interceptor = (callback == null)
+  public void getSpotTradingBalanceOfCurrency(String currency,
+      BiConsumer<Balance, CryptomarketSDKException> resultBiConsumer) {
+    Interceptor interceptor = (resultBiConsumer == null)
         ? null
-        : InterceptorFactory.newOfWSResponseObject(callback, Balance.class);
-    sendById("spot_balance", null, interceptor);
+        : InterceptorFactory.newOfWSResponseObject(resultBiConsumer, Balance.class);
+    ParamsBuilder paramsBuilder = new ParamsBuilder().currency(currency);
+    sendById("spot_balance", paramsBuilder.buildObjectMap(), interceptor);
   }
 
   @Override
-  public void getSpotCommissions(Callback<List<Commission>> callback) {
-    Interceptor interceptor = (callback == null)
+  public void getSpotCommissions(BiConsumer<List<Commission>, CryptomarketSDKException> resultBiConsumer) {
+    Interceptor interceptor = (resultBiConsumer == null)
         ? null
-        : InterceptorFactory.newOfWSResponseList(callback, Commission.class);
+        : InterceptorFactory.newOfWSResponseList(resultBiConsumer, Commission.class);
     sendById("spot_fees", null, interceptor);
   }
 
   @Override
-  public void getSpotCommissionOfSymbol(String symbol, Callback<Commission> callback) {
+  public void getSpotCommissionOfSymbol(String symbol,
+      BiConsumer<Commission, CryptomarketSDKException> resultBiConsumer) {
     ParamsBuilder paramsBuilder = new ParamsBuilder().symbol(symbol);
-    Interceptor interceptor = (callback == null)
+    Interceptor interceptor = (resultBiConsumer == null)
         ? null
-        : InterceptorFactory.newOfWSResponseObject(callback, Commission.class);
+        : InterceptorFactory.newOfWSResponseObject(resultBiConsumer, Commission.class);
     sendById("spot_fee", paramsBuilder.buildObjectMap(), interceptor);
   }
 

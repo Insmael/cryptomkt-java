@@ -1,14 +1,16 @@
 package com.cryptomarket.sdk.websocket;
 
 import java.util.List;
+import java.util.function.BiConsumer;
 
+import com.cryptomarket.params.NotificationType;
 import com.cryptomarket.params.ParamsBuilder;
 import com.cryptomarket.params.Sort;
 import com.cryptomarket.params.SortBy;
 import com.cryptomarket.params.TransactionStatus;
 import com.cryptomarket.params.TransactionSubtype;
 import com.cryptomarket.params.TransactionType;
-import com.cryptomarket.sdk.Callback;
+import com.cryptomarket.sdk.exceptions.CryptomarketSDKException;
 import com.cryptomarket.sdk.models.Balance;
 import com.cryptomarket.sdk.models.Transaction;
 
@@ -28,65 +30,87 @@ public interface CryptomarketWSWalletClient extends CryptomarketWS {
    * such as creating a transaction, updating the pending state (e.g., the hash
    * assigned) or completing a transaction
    * <p>
+   * all notifications are updates
+   * <p>
    * https://api.exchange.cryptomkt.com/#subscribe-to-transactions
    *
-   * @param callback       recieves a feed of transactions
-   * @param resultCallback Optional. recieves true if the subscription is
-   *                       successfull
+   * @param notificationBiConsumer recieves a feed of transactions, and the
+   *                               type of notification, only UPDATE
+   * @param resultBiConsumer       Optional. recieves true if the subscription is
+   *                               successfull, and a CryptomarketSDKException if
+   *                               there was a problem (or null if there was none)
    *
    */
-  public void subscribeToTransactions(Callback<Transaction> callback, @Nullable Callback<Boolean> resultCallback);
+  public void subscribeToTransactions(BiConsumer<Transaction, NotificationType> notificationBiConsumer,
+      @Nullable BiConsumer<Boolean, CryptomarketSDKException> resultBiConsumer);
 
   /**
    * stop recieving the feed of transactions
    * <p>
    * https://api.exchange.cryptomkt.com/#subscribe-to-transactions
    *
-   * @param callback recieves true if the unsubscription is successfull.
+   * @param resultBiConsumer recieves true if the unsubscription is successfull,
+   *                         and a
+   *                         CryptomarketSDKException if
+   *                         there was a problem (or null if there was none)
    *
    */
-  public void unsubscribeToTransactions(@Nullable Callback<Boolean> callback);
+  public void unsubscribeToTransactions(@Nullable BiConsumer<Boolean, CryptomarketSDKException> resultBiConsumer);
 
   /**
    * subscribe to a feed of the user's wallet balances
    * <p>
    * only non-zero values are present
    * <p>
+   * the first notification has a snapshot of the wallet. further notifications
+   * are updates of the wallet
+   * <p>
    * https://api.exchange.cryptomkt.com/#subscribe-to-wallet-balance
    *
-   * @param callback       recieves a feed of a list of balances
-   * @param resultCallback Optional. recieves true if the subscription is
-   *                       successfull.
+   * @param notificationBiConsumer recieves a feed of a list of balances, and the
+   *                               type of notification, either SNAPSHOT or UPDATE
+   * @param resultBiConsumer       Optional. recieves true if the subscription is
+   *                               successfull, and a CryptomarketSDKException if
+   *                               there was a problem (or null if there was none)
    */
-  public void subscribeToWalletBalances(Callback<List<Balance>> callback, @Nullable Callback<Boolean> resultCallback);
+  public void subscribeToWalletBalances(BiConsumer<List<Balance>, NotificationType> notificationBiConsumer,
+      @Nullable BiConsumer<Boolean, CryptomarketSDKException> resultBiConsumer);
 
   /**
    * stop recieving the feed of balances changes
    * <p>
    * https://api.exchange.cryptomkt.com/#subscribe-to-wallet-balance
    *
-   * @param callback recieves true is the unsubcription is successfull.
+   * @param resultBiConsumer recieves true is the unsubcription is successfull,
+   *                         and a
+   *                         CryptomarketSDKException if
+   *                         there was a problem (or null if there was none)
    */
-  public void unsubscribeToWalletBalances(@Nullable Callback<Boolean> callback);
+  public void unsubscribeToWalletBalances(@Nullable BiConsumer<Boolean, CryptomarketSDKException> resultBiConsumer);
 
   /**
    * Get the user's wallet balance for all currencies with balance
    * <p>
    * https://api.exchange.cryptomkt.com/#wallet-balance
    *
-   * @param callback recieves a list of balances
+   * @param resultBiConsumer recieves a list of balances, and a
+   *                         CryptomarketSDKException
+   *                         if
+   *                         there was a problem (or null if there was none)
    */
-  public void getWalletBalances(Callback<List<Balance>> callback);
+  public void getWalletBalances(BiConsumer<List<Balance>, CryptomarketSDKException> resultBiConsumer);
 
   /**
    * Get the user's wallet balance of a currency
    * <p>
    * https://api.exchange.cryptomkt.com/#wallet-balance
    *
-   * @param currency The currency code to query the balance
-   * @param callback recieves a balance
+   * @param currency         The currency code to query the balance
+   * @param resultBiConsumer recieves a balance, and a CryptomarketSDKException if
+   *                         there was a problem (or null if there was none)
    */
-  public void getWalletBalanceOfCurrency(String currency, Callback<Balance> callback);
+  public void getWalletBalanceOfCurrency(String currency,
+      BiConsumer<Balance, CryptomarketSDKException> resultBiConsumer);
 
   /**
    * Get the transaction history of the account
@@ -103,7 +127,9 @@ public interface CryptomarketWSWalletClient extends CryptomarketWS {
    * <p>
    * https://api.exchange.cryptomkt.com/#get-transactions-history
    *
-   * @param callback            recieves a list of transactions
+   * @param resultBiConsumer    recieves a list of transactions, and a
+   *                            CryptomarketSDKException if
+   *                            there was a problem (or null if there was none)
    * @param transactionIDs      Optional. List of transaction identifiers to query
    * @param transactionTypes    Optional. List of types to query. valid types are:
    *                            'DEPOSIT', 'WITHDRAW', 'TRANSFER' and 'SWAP'
@@ -135,7 +161,7 @@ public interface CryptomarketWSWalletClient extends CryptomarketWS {
    * @param offset              Optional. Default is 0. Max is 100000
    */
   public void getTransactions(
-      Callback<List<Transaction>> callback,
+      BiConsumer<List<Transaction>, CryptomarketSDKException> resultBiConsumer,
       @Nullable List<TransactionType> types,
       @Nullable List<TransactionSubtype> subtypes,
       @Nullable List<TransactionStatus> statuses,
@@ -165,7 +191,9 @@ public interface CryptomarketWSWalletClient extends CryptomarketWS {
    * <p>
    * https://api.exchange.cryptomkt.com/#get-transactions-history
    *
-   * @param callback            recieves a list of transactions
+   * @param resultBiConsumer    recieves a list of transactions, and a
+   *                            CryptomarketSDKException if
+   *                            there was a problem (or null if there was none)
    * @param paramsBuilder       takes all other arguments except callback as chain
    *                            methods
    * @param transactionIDs      Optional. List of transaction identifiers to query
@@ -199,6 +227,6 @@ public interface CryptomarketWSWalletClient extends CryptomarketWS {
    * @param offset              Optional. Default is 0. Max is 100000
    */
   public void getTransactions(
-    Callback<List<Transaction>> callback,
+      BiConsumer<List<Transaction>, CryptomarketSDKException> resultBiConsumer,
       ParamsBuilder paramsBuilder);
 }

@@ -22,6 +22,8 @@ import com.cryptomarket.sdk.models.Price;
 import com.cryptomarket.sdk.models.PriceHistory;
 import com.cryptomarket.sdk.models.PublicTrade;
 import com.cryptomarket.sdk.models.Report;
+import com.cryptomarket.sdk.models.SubAccount;
+import com.cryptomarket.sdk.models.SubAccountSettings;
 import com.cryptomarket.sdk.models.Symbol;
 import com.cryptomarket.sdk.models.Ticker;
 import com.cryptomarket.sdk.models.TickerPrice;
@@ -263,6 +265,24 @@ public class Checker {
         obj.getCreatedAt(),
         obj.getUpdatedAt(),
         obj.getReportType().toString()));
+    fields.forEach(checkString);
+  };
+
+  public static Consumer<SubAccount> checkSubAccount = obj -> {
+    List<String> fields = new ArrayList<>(Arrays.asList(
+        obj.getSubAccountID(),
+        obj.getEmail(),
+        obj.getStatus().toString()));
+    fields.forEach(checkString);
+  };
+
+  public static Consumer<? super SubAccountSettings> checkSubAccountSettings = obj -> {
+    List<String> fields = new ArrayList<>(Arrays.asList(
+        obj.getSubAccountID(),
+        obj.getDepositAddressGenerationEnabled().toString(),
+        obj.getDescription(),
+        obj.getCreatedAt(),
+        obj.getUpdatedAt()));
     fields.forEach(checkString);
   };
 }

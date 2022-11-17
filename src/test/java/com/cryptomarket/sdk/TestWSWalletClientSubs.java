@@ -2,13 +2,10 @@ package com.cryptomarket.sdk;
 
 import static org.junit.Assert.fail;
 
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.cryptomarket.sdk.models.Transaction;
 import com.cryptomarket.params.AccountType;
 import com.cryptomarket.params.ParamsBuilder;
-import com.cryptomarket.sdk.models.Balance;
 import com.cryptomarket.sdk.websocket.CryptomarketWSWalletClient;
 import com.cryptomarket.sdk.websocket.CryptomarketWSWalletClientImpl;
 
@@ -55,29 +52,17 @@ public class TestWSWalletClientSubs {
 
   @Test
   public void testSubscribeToTransactions() {
-    wsClient.subscribeToTransactions(new Callback<Transaction>() {
-      @Override
-      public void resolve(Transaction result) {
-        Checker.checkTransaction.accept(result);
-      }
-
-      @Override
-      public void reject(Throwable exception) {
-        fail();
-      }
-    }, new Callback<Boolean>() {
-      @Override
-      public void resolve(Boolean result) {
-        if (!result) {
-          fail();
-        }
-      }
-
-      @Override
-      public void reject(Throwable exception) {
-        fail();
-      }
-    });
+    wsClient.subscribeToTransactions(
+        (data, nType) -> {
+          Checker.checkTransaction.accept(data);
+        }, (result, exception) -> {
+          if (exception != null) {
+            fail();
+          }
+          if (!result) {
+            fail();
+          }
+        });
     try {
       TimeUnit.SECONDS.sleep(3);
     } catch (InterruptedException e) {
@@ -113,20 +98,11 @@ public class TestWSWalletClientSubs {
     } catch (InterruptedException e) {
       fail();
     }
-    wsClient.unsubscribeToTransactions(new Callback<Boolean>() {
-      @Override
-      public void resolve(Boolean result) {
-        if (!result) {
-          fail();
-        }
-      }
-
-      @Override
-      public void reject(Throwable exception) {
+    wsClient.unsubscribeToTransactions((result, exception) -> {
+      if (!result) {
         fail();
       }
     });
-
     try {
       TimeUnit.SECONDS.sleep(3);
     } catch (InterruptedException e) {
@@ -136,30 +112,13 @@ public class TestWSWalletClientSubs {
 
   @Test
   public void testSubscribeToWalletBalances() {
-    wsClient.subscribeToWalletBalances(new Callback<List<Balance>>() {
-      @Override
-      public void resolve(List<Balance> result) {
-        result.forEach(Checker.checkBalance);
-      }
-
-      @Override
-      public void reject(Throwable exception) {
-        fail();
-      }
-    }, new Callback<Boolean>() {
-      @Override
-      public void resolve(Boolean result) {
-        if (!result) {
-          fail();
-        }
-      }
-
-      @Override
-      public void reject(Throwable exception) {
+    wsClient.subscribeToWalletBalances((data, nType) -> {
+      data.forEach(Checker.checkBalance);
+    }, (result, exception) -> {
+      if (!result) {
         fail();
       }
     });
-
     try {
       TimeUnit.SECONDS.sleep(3);
     } catch (InterruptedException e) {
@@ -195,23 +154,20 @@ public class TestWSWalletClientSubs {
     } catch (InterruptedException e) {
       fail();
     }
-    wsClient.unsubscribeToWalletBalances(new Callback<Boolean>() {
-      @Override
-      public void resolve(Boolean result) {
-        if (!result) {
-          fail();
-        }
+    wsClient.unsubscribeToWalletBalances((result, exception) -> {
+      if (exception != null) {
+        fail();
       }
-
-      @Override
-      public void reject(Throwable exception) {
+      if (!result) {
         fail();
       }
     });
 
     try {
       TimeUnit.SECONDS.sleep(3);
-    } catch (InterruptedException e) {
+    } catch (
+
+    InterruptedException e) {
       fail();
     }
   }

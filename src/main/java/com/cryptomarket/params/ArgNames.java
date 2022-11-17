@@ -57,5 +57,12 @@ public class ArgNames {
   public static final String ORDER_LIST_ID = "order_list_id";
   public static final String CONTINGENCY_TYPE = "contingency_type";
   public static final String ORDERS = "orders";
-
+  public static final String SUB_ACCOUNT_IDS = "sub_account_ids";
+  public static final String DEPOSIT_ADDRESS_GENERATION_ENABLED = "deposit_address_generation_enabled";
+  public static final String WITHDRAW_ENABLED = "withdraw_enabled";
+  public static final String CREATED_AT = "created_at";
+  public static final String UPDATED_AT = "updated_at";
+  public static final String DESCRIPTION = "description";
+  public static final String SUB_ACCOUNT_ID = "sub_account_id";
+  public static final String TRANSFER_TYPE = "type";
 }

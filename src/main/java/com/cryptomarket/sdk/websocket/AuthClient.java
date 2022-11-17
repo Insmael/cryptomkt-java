@@ -3,9 +3,10 @@ package com.cryptomarket.sdk.websocket;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
-import com.cryptomarket.sdk.Callback;
 import com.cryptomarket.sdk.HMAC;
+import com.cryptomarket.sdk.exceptions.CryptomarketSDKException;
 import com.cryptomarket.sdk.websocket.interceptor.Interceptor;
 import com.cryptomarket.sdk.websocket.interceptor.InterceptorFactory;
 
@@ -28,16 +29,15 @@ public class AuthClient extends ClientBase {
   @Override
   public void onOpen() {
     CryptomarketWS client = this;
-    this.authenticate(new Callback<Boolean>() {
-      @Override
-      public void resolve(Boolean result) {
-        client.onConnect();
-      }
-
-      @Override
-      public void reject(Throwable exception) {
+    this.authenticate((success, exception) -> {
+      if (exception != null) {
         client.onFailure(exception);
+        return;
       }
+      if (!success) {
+        client.onFailure(new CryptomarketSDKException("authorization failed: unsuccessful authorization request"));
+      }
+      client.onConnect();
     });
   }
 
@@ -45,7 +45,7 @@ public class AuthClient extends ClientBase {
   public void onConnect() {
   }
 
-  public void authenticate(Callback<Boolean> callback) {
+  public void authenticate(BiConsumer<Boolean, CryptomarketSDKException> resultBiConsumer) {
     Map<String, Object> params = new HashMap<>();
 
     Long timestamp = System.currentTimeMillis();
@@ -57,8 +57,8 @@ public class AuthClient extends ClientBase {
       params.put("window", window.toString());
     params.put("signature", HMAC.sign(apiSecret, (window != 0) ? strTimestamp + window : strTimestamp));
 
-    Interceptor interceptor = (callback == null) ? null
-        : InterceptorFactory.newOfWSResponseObject(callback, Boolean.class);
+    Interceptor interceptor = (resultBiConsumer == null) ? null
+        : InterceptorFactory.newOfWSResponseObject(resultBiConsumer, Boolean.class);
     sendById("login", params, interceptor);
   }
 }
